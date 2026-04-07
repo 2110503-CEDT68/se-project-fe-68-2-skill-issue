@@ -1,0 +1,24 @@
+.modal-date-row { display: flex; gap: 12px; margin: 16px 0; }
+
+.modal-field { flex: 1; display: flex; flex-direction: column; gap: 6px; }
+
+.modal-field label {
+  font-size: .8rem; font-weight: 500;
+  color: var(--text); text-align: left;
+}
+
+.req { color: var(--accent); }
+
+.date-hint {
+  font-size: .75rem; color: var(--muted);
+  margin-bottom: 20px; text-align: left;
+}
+
+.modal-input {
+  font-family: 'DM Sans', sans-serif; font-size: .9rem; color: var(--text);
+  background: var(--surface); border: 1.5px solid var(--border);
+  border-radius: 8px; padding: 10px 14px; width: 100%;
+  outline: none; transition: border-color .2s, box-shadow .2s;
+}
+.modal-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(200,80,42,.12); }
+select.modal-input { appearance: none; cursor: pointer; }

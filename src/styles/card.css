@@ -1,0 +1,67 @@
+.booking-card {
+  background: var(--surface); border: 1.5px solid var(--border);
+  border-radius: var(--radius); padding: 18px 22px;
+  display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  animation: fadeUp .45s ease both;
+  transition: box-shadow .2s, border-color .2s;
+}
+.booking-card:hover { box-shadow: 0 4px 18px rgba(0,0,0,.07); border-color: #C8BAB2; }
+
+.booking-card-left { display: flex; align-items: flex-start; gap: 14px; flex: 1; min-width: 0; }
+
+.booking-number {
+  width: 28px; height: 28px; background: var(--accent-light); border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: .75rem; font-weight: 600; color: var(--accent); flex-shrink: 0;
+}
+
+.booking-info { flex: 1; min-width: 0; }
+
+.company-name-btn {
+  font-size: 1rem; font-weight: 600; background: none; border: none;
+  cursor: pointer; color: var(--text);
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 0; margin-bottom: 5px; transition: color .2s;
+  font-family: 'DM Sans', sans-serif;
+}
+.company-name-btn:hover { color: var(--accent); }
+
+.booking-meta { display: flex; flex-wrap: wrap; gap: 8px; }
+
+.meta-tag {
+  font-size: .77rem; color: var(--muted);
+  display: inline-flex; align-items: center; gap: 4px;
+}
+.meta-tag a { color: var(--accent); text-decoration: none; }
+
+.meta-user {
+  background: #FFF0EC; color: var(--accent);
+  border-radius: 6px; padding: 2px 7px; font-weight: 500;
+}
+
+.meta-date {
+  background: none; border: none; cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+  border-radius: 6px; padding: 2px 5px; margin-left: -5px;
+  transition: background .2s, color .2s;
+}
+.meta-date:hover { background: var(--accent-light); color: var(--accent); }
+
+.edit-hint { font-size: .7rem; color: var(--accent); margin-left: 3px; }
+
+.booking-actions { display: flex; gap: 8px; flex-shrink: 0; }
+
+.btn-edit-date,
+.btn-cancel {
+  font-size: .79rem; font-weight: 500; color: var(--muted); background: none;
+  border: 1px solid var(--border); border-radius: 8px; padding: 7px 13px;
+  cursor: pointer; transition: all .2s;
+  font-family: 'DM Sans', sans-serif; white-space: nowrap;
+}
+.btn-edit-date:hover,
+.btn-cancel:hover { border-color: var(--accent); color: var(--accent); }
+
+@media (max-width: 680px) {
+  .booking-card    { flex-direction: column; align-items: flex-start; }
+  .booking-actions { width: 100%; justify-content: flex-end; }
+}

@@ -1,0 +1,30 @@
+.bookings-list { display: flex; flex-direction: column; gap: 10px; }
+
+/* ── Skeleton */
+.booking-skeleton {
+  background: var(--surface); border: 1.5px solid var(--border);
+  border-radius: var(--radius); padding: 18px 22px;
+  display: flex; flex-direction: column; gap: 10px;
+}
+.sk-line {
+  height: 12px; border-radius: 6px;
+  background: linear-gradient(90deg, #ede8e2 25%, #f5f2ed 50%, #ede8e2 75%);
+  background-size: 200% 100%; animation: shimmer 1.4s infinite;
+}
+.sk-wide   { width: 55%; }
+.sk-medium { width: 75%; }
+.sk-narrow { width: 40%; }
+@keyframes shimmer { to { background-position: -200% 0; } }
+
+/* ── Empty State */
+.empty-state {
+  text-align: center; padding: 56px 24px;
+  background: var(--surface);
+  border: 1px dashed var(--border); border-radius: var(--radius);
+}
+.empty-state .icon { font-size: 2.2rem; margin-bottom: 14px; }
+.empty-state h3 {
+  font-family: 'DM Serif Display', serif;
+  font-size: 1.3rem; margin-bottom: 8px;
+}
+.empty-state p { font-size: .87rem; color: var(--muted); margin-bottom: 20px; }

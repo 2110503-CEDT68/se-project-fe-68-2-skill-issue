@@ -1,0 +1,34 @@
+.navbar {
+  position: sticky; top: 0; z-index: 100; height: 64px;
+  background: rgba(245,242,237,.92);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 40px;
+}
+
+.nav-brand {
+  display: flex; align-items: center; gap: 8px;
+  text-decoration: none; color: inherit;
+}
+
+.brand-dot  { width: 9px; height: 9px; background: var(--accent); border-radius: 50%; display: inline-block; }
+.brand-name { font-weight: 600; font-size: .85rem; letter-spacing: .1em; text-transform: uppercase; }
+
+.nav-right { display: flex; align-items: center; gap: 16px; }
+.nav-user  { font-size: .85rem; color: var(--muted); }
+.nav-user strong { color: var(--text); }
+
+.btn-nav {
+  font-size: .82rem; font-weight: 500; background: none;
+  border: 1px solid var(--border); border-radius: 8px;
+  padding: 6px 14px; cursor: pointer; color: var(--muted);
+  transition: all .2s; text-decoration: none;
+  display: inline-flex; align-items: center; gap: 5px;
+  font-family: 'DM Sans', sans-serif;
+}
+.btn-nav:hover { border-color: var(--accent); color: var(--accent); }
+
+@media (max-width: 680px) {
+  .navbar { padding: 0 16px; }
+}
