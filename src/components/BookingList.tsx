@@ -14,7 +14,6 @@ import getBookings   from '../libs/getBookings';
 import updateBooking from '../libs/updateBooking';
 import deleteBooking from '../libs/deleteBooking';
 import getReviews    from '../libs/getReviews';
-import deleteReview  from '../libs/deleteReview';
 
 import { setBookings, removeBooking, updateBookingDate } from '../redux/features/bookSlice';
 import { RootState } from '../redux/store';
@@ -143,23 +142,6 @@ export default function BookingList({ items }: { items?: BookingItem[] }) {
     }
   }
 
-  async function confirmDeleteReview() {
-    if (!deleteReviewTarget) return;
-    setDeleteReviewLoading(true);
-    try {
-      const token = localStorage.getItem('jf_token') || '';
-      await deleteReview(token, deleteReviewTarget.review._id);
-      const companyId = deleteReviewTarget.booking.company._id;
-      setReviewMap(prev => ({ ...prev, [companyId]: null }));
-      setDeleteReviewTarget(null);
-      showToast('✅ Review deleted.', 'success');
-    } catch (err: unknown) {
-      showToast(`❌ ${err instanceof Error ? err.message : 'Delete failed'}`, 'error');
-      setDeleteReviewTarget(null);
-    } finally {
-      setDeleteReviewLoading(false);
-    }
-  }
 
   if (loading) return (
     <div className="bookings-list">
@@ -233,23 +215,6 @@ export default function BookingList({ items }: { items?: BookingItem[] }) {
           target={detailTarget}
           onClose={() => setDetailTarget(null)}
         />
-      )}
-
-      {deleteReviewTarget && (
-        <div className="modal-overlay open"
-          onClick={(e) => { if (e.target === e.currentTarget) setDeleteReviewTarget(null); }}>
-          <div className="modal" style={{ maxWidth: 380 }}>
-            <div className="modal-icon">🗑️</div>
-            <h3>Delete Review</h3>
-            <p>Are you sure you want to delete your review for <strong>{deleteReviewTarget.booking.company.name}</strong>?</p>
-            <div className="modal-actions">
-              <button className="btn-modal-cancel" onClick={() => setDeleteReviewTarget(null)}>Cancel</button>
-              <button className="btn-modal-confirm" onClick={confirmDeleteReview} disabled={deleteReviewLoading}>
-                {deleteReviewLoading ? 'Deleting…' : 'Delete'}
-              </button>
-            </div>
-          </div>
-        </div>
       )}
 
       <Toast toast={toast} />

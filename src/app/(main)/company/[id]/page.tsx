@@ -10,8 +10,6 @@ import getCompany   from '@/libs/getCompany';
 import getBookings  from '@/libs/getBookings';
 import getReviews   from '@/libs/getReviews';
 import createReview from '@/libs/createReview';
-import updateReview from '@/libs/updateReview';
-import deleteReview from '@/libs/deleteReview';
 
 import { useToast } from '@/hooks/useToast';
 import { formatDate } from '@/utils/dateFormat';
@@ -135,16 +133,10 @@ export default function CompanyProfilePage() {
     setSubmitting(true);
     try {
       const token = localStorage.getItem('jf_token') || '';
-      if (userReview) {
-        const updated = await updateReview(token, userReview._id, rating, comment);
-        setReviews(prev => prev.map(r => r._id === userReview._id ? { ...r, ...updated } : r));
-        showToast('✅ Review updated!', 'success');
-      } else {
-        await createReview(token, companyId, rating, comment);
-        await loadReviews();
-        await loadCompany();
-        showToast('✅ Review published!', 'success');
-      }
+      await createReview(token, companyId, rating, comment);
+      await loadReviews();
+      await loadCompany();
+      showToast('✅ Review published!', 'success');
       setShowModal(false);
     } catch (err: unknown) {
       showToast(`❌ ${err instanceof Error ? err.message : 'Failed to save review'}`, 'error');
@@ -153,25 +145,6 @@ export default function CompanyProfilePage() {
     }
   }
 
-  // ── Delete review
-  async function handleDeleteReview() {
-    if (!deleteTarget) return;
-    setDeleteLoading(true);
-    try {
-      const token = localStorage.getItem('jf_token') || '';
-      await deleteReview(token, deleteTarget._id);
-      setReviews(prev => prev.filter(r => r._id !== deleteTarget._id));
-      setUserReview(null);
-      setDeleteTarget(null);
-      await loadCompany();
-      showToast('✅ Review deleted.', 'success');
-    } catch (err: unknown) {
-      showToast(`❌ ${err instanceof Error ? err.message : 'Delete failed'}`, 'error');
-      setDeleteTarget(null);
-    } finally {
-      setDeleteLoading(false);
-    }
-  }
 
   // ── Skeleton
   if (loadingPage) return (
@@ -276,12 +249,7 @@ export default function CompanyProfilePage() {
 
                   <p className="review-card-comment">{review.comment}</p>
 
-                  {isOwner && (
-                    <div className="review-card-actions" style={{ marginTop: 12 }}>
-                      <button className="btn-review-edit" onClick={() => setShowModal(true)}>Edit</button>
-                      <button className="btn-review-delete" onClick={() => setDeleteTarget(review)}>Delete</button>
-                    </div>
-                  )}
+                
                 </div>
               );
             })}
@@ -305,24 +273,6 @@ export default function CompanyProfilePage() {
           onConfirm={handleReviewSubmit}
           onClose={() => setShowModal(false)}
         />
-      )}
-
-      {/* ── Delete Confirm Modal */}
-      {deleteTarget && (
-        <div className="modal-overlay open"
-          onClick={(e) => { if (e.target === e.currentTarget) setDeleteTarget(null); }}>
-          <div className="modal" style={{ maxWidth: 380 }}>
-            <div className="modal-icon">🗑️</div>
-            <h3>Delete Review</h3>
-            <p>Are you sure you want to delete this review? This cannot be undone.</p>
-            <div className="modal-actions">
-              <button className="btn-modal-cancel" onClick={() => setDeleteTarget(null)}>Cancel</button>
-              <button className="btn-modal-confirm" onClick={handleDeleteReview} disabled={deleteLoading}>
-                {deleteLoading ? 'Deleting…' : 'Delete'}
-              </button>
-            </div>
-          </div>
-        </div>
       )}
 
       <Toast toast={toast} />
