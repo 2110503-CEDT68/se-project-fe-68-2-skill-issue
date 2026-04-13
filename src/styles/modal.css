@@ -89,6 +89,87 @@
 .toast.success { background: #2D7A47; }
 .toast.error   { background: #A02020; }
 
+.modal.delete-review-popup {
+  width: 400px !important;
+  max-width: 400px !important;
+  height: 280px !important;
+  padding: 0 !important; /* ล้าง Padding ของ .modal เดิมทิ้ง เพราะเรามี padding ในตัว popup แล้ว */
+  background: none !important; /* ล้างพื้นหลังเดิม */
+  box-shadow: none !important; /* ล้างเงาเดิม */
+  overflow: visible;
+}
+
+.delete-review-popup {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 32px 24px;
+  width: 100%; /* ให้เต็ม 400px ที่ตัวแม่บีบไว้ */
+  height: 100%;
+  background: #FFFFFF;
+  box-shadow: 0px 24px 64px rgba(0, 0, 0, 0.18);
+  border-radius: 18px;
+  box-sizing: border-box;
+}
+
+.delete-title {
+  width: 100%;
+  font-family: 'DM Serif Display', serif;
+  font-weight: 400;
+  font-size: 22.4px;
+  line-height: 31px;
+  text-align: center;
+  color: #1A1714;
+  margin: 0;
+}
+
+.delete-desc {
+  width: 100%;
+  font-family: 'DM Sans', sans-serif;
+  font-weight: 400;
+  font-size: 14.1px;
+  line-height: 23px;
+  text-align: center;
+  color: #7C7570;
+  margin: 8px 0 0;
+}
+
+.delete-modal-actions {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 16px;
+  width: 100%;
+}
+
+.btn-cancel-light {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 106.1px;
+  height: 41.6px;
+  border: 1px solid #E0DAD4;
+  border-radius: 10px;
+  background: white;
+  cursor: pointer;
+}
+
+.btn-confirm-delete {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 137.5px;
+  height: 41.6px;
+  background: #A02020;
+  border-radius: 10px;
+  border: none;
+  cursor: pointer;
+}
+
+.btn-text-tapa { color: #7C7570; font-family: 'DM Sans'; font-weight: 500; font-size: 14.1px; }
+.btn-text-white { color: #FFFFFF; font-family: 'DM Sans'; font-weight: 600; font-size: 14.1px; }
+
 @keyframes slideUp {
   from { opacity: 0; transform: translateY(20px); }
   to   { opacity: 1; transform: translateY(0); }

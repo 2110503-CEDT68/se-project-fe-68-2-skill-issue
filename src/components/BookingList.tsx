@@ -7,6 +7,7 @@ import Card        from './Card';
 import EditModal   from './modals/EditModal';
 import CancelModal from './modals/CancelModal';
 import DetailModal from './modals/DetailModal';
+import DeleteReviewModal from './modals/DeleteReviewModal';
 import EmptyState  from './EmptyState';
 import Toast       from './Toast';
 
@@ -14,6 +15,7 @@ import getBookings   from '../libs/getBookings';
 import updateBooking from '../libs/updateBooking';
 import deleteBooking from '../libs/deleteBooking';
 import getReviews    from '../libs/getReviews';
+import deleteReview from '../libs/deleteReview';
 
 import { setBookings, removeBooking, updateBookingDate } from '../redux/features/bookSlice';
 import { RootState } from '../redux/store';
@@ -142,6 +144,28 @@ export default function BookingList({ items }: { items?: BookingItem[] }) {
     }
   }
 
+  async function confirmDeleteReview() {
+  if (!deleteReviewTarget) return;
+  setDeleteReviewLoading(true);
+  try {
+    const token = localStorage.getItem('jf_token') || '';
+    await deleteReview(token, deleteReviewTarget.review._id);
+    
+    // อัปเดต UI: ลบรีวิวออกจาก Map เพื่อให้หน้าจอกลับมาแสดงปุ่ม "Review Company"
+    setReviewMap(prev => ({ 
+      ...prev, 
+      [deleteReviewTarget.booking.company._id]: null 
+    }));
+    
+    setDeleteReviewTarget(null);
+    showToast('✅ Review deleted.', 'success');
+  } catch (err: unknown) {
+    showToast(`❌ ${err instanceof Error ? err.message : 'Delete failed'}`, 'error');
+  } finally {
+    setDeleteReviewLoading(false);
+  }
+  }
+
 
   if (loading) return (
     <div className="bookings-list">
@@ -215,6 +239,14 @@ export default function BookingList({ items }: { items?: BookingItem[] }) {
           target={detailTarget}
           onClose={() => setDetailTarget(null)}
         />
+      )}
+
+      {deleteReviewTarget && (
+      <DeleteReviewModal
+        loading={deleteReviewLoading}
+        onConfirm={confirmDeleteReview}
+        onClose={() => setDeleteReviewTarget(null)}
+      />
       )}
 
       <Toast toast={toast} />
