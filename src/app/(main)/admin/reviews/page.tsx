@@ -13,6 +13,8 @@ import Toast from '@/components/Toast';
 import { useToast } from '@/hooks/useToast';
 import '@/styles/admin.css';
 import '@/styles/review.css';
+import deleteReview from '@/libs/deleteReview';
+import DeleteReviewAdminModal from '@/components/modals/DeleteReviewAdminModal';
 
 // ── Star display (read-only)
 function StarDisplay({ rating }: { rating: number }) {
@@ -49,6 +51,35 @@ export default function AdminReviewsPage() {
   const [selectedCompany, setSelectedCompany] = useState<CompanyItem | null>(null);
   const [pickerOpen, setPickerOpen]           = useState(false);
   const [pickerSearch, setPickerSearch]       = useState('');
+
+  //Admin Delete Review
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [selectedReviewId, setSelectedReviewId] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const handleDelete = async (reason: string) => {
+  const token = localStorage.getItem('jf_token');
+  if (!token || !selectedReviewId) return;
+
+  try {
+    setDeleting(true);
+
+    await deleteReview(token, selectedReviewId);
+
+    setReviews((prev) =>
+      prev.filter((r) => r._id !== selectedReviewId)
+    );
+
+    showToast('Review deleted successfully', 'success');
+    setDeleteModalOpen(false);
+  } catch {
+    showToast('Failed to delete review', 'error');
+  } finally {
+    setDeleting(false);
+  }
+};
+
+
+
 
   // Total unique users (across all reviews)
   const uniqueUsers = new Set(
@@ -217,43 +248,38 @@ export default function AdminReviewsPage() {
           {filteredReviews.map((review, idx) => {
             const userName = typeof review.user === 'object' ? review.user.name : 'Unknown';
             return (
-              <div
-                key={review._id}
-                className="admin-review-card"
-                style={{ animationDelay: `${idx * 0.04}s` }}
-              >
-                <div className="admin-review-card-top">
-                  {/* Left: meta */}
+              <div key={review._id} className="admin-review-card">
+                <div style={{ flex: 1 }}>
                   <div className="admin-review-meta">
-                    {/* User */}
-                    <span className="meta-tag meta-user">
-                      <svg width="11" height="11" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                    <span className="meta-tag meta-user" title={userName}>
+                       <svg width="11" height="11" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                         <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
                         <circle cx="12" cy="7" r="4" />
-                      </svg>
-                      {userName}
+                      </svg> {userName}
                     </span>
-                    {/* Date */}
                     <span className="meta-tag">
-                      <svg width="11" height="11" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                       <svg width="11" height="11" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                         <rect x="3" y="4" width="18" height="18" rx="2" />
                         <line x1="16" y1="2" x2="16" y2="6" />
                         <line x1="8" y1="2" x2="8" y2="6" />
                         <line x1="3" y1="10" x2="21" y2="10" />
-                      </svg>
-                      {formatDate(review.createdAt)}
-                      <span style={{ marginLeft: 2 }}>✏️</span>
+                      </svg> {formatDate(review.createdAt)}
                     </span>
                   </div>
-                  {/* Right: stars */}
-                  <StarDisplay rating={review.rating} />
+                  <div className="admin-review-company">{review.companyName}</div>
+                  <div className="admin-review-comment">{review.comment}</div>
                 </div>
-
-                {/* Company name */}
-                <div className="admin-review-company">{review.companyName}</div>
-
-                {/* Comment */}
-                <div className="admin-review-comment">{review.comment}</div>
+                
+                <div className="admin-review-actions">
+                  <StarDisplay rating={review.rating} />
+                  <button 
+                    className="btn-admin-delete" 
+                    onClick={() => {setSelectedReviewId(review._id);
+                                    setDeleteModalOpen(true);}}
+                  >
+                    Delete
+                  </button>
+                </div>
               </div>
             );
           })}
@@ -309,6 +335,13 @@ export default function AdminReviewsPage() {
           </div>
         </div>
       </ModalWrapper>
+
+      <DeleteReviewAdminModal
+    open={deleteModalOpen}
+    onClose={() => setDeleteModalOpen(false)}
+    onConfirm={handleDelete}
+  loading={deleting}
+/>
 
       <Toast toast={toast} />
     </div>

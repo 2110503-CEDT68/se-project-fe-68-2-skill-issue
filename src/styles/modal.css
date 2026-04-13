@@ -167,6 +167,21 @@
   cursor: pointer;
 }
 
+
+.filter-select.placeholder {
+  color: #999;
+}
+
+
+.filter-select {
+  color: #000;
+}
+
+
+.filter-select option {
+  color: #000;
+}
+
 .btn-text-tapa { color: #7C7570; font-family: 'DM Sans'; font-weight: 500; font-size: 14.1px; }
 .btn-text-white { color: #FFFFFF; font-family: 'DM Sans'; font-weight: 600; font-size: 14.1px; }
 
