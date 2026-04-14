@@ -4,6 +4,35 @@ import Link from 'next/link';
 import { CompanyItem, BookingItem } from '../../interface';
 import { formatDate } from '../utils/dateFormat';
 
+function StarDisplay({ rating }: { rating: number }) {
+  return (
+    <div style={{ display: 'inline-flex', gap: 2 }}>
+      {[1,2,3,4,5].map(s => {
+        const full = rating >= s;
+        const half = !full && rating >= s - 0.5;
+        const clipId = `cc-half-${s}`;
+        return (
+          <svg key={s} width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="#C4BDB8" strokeWidth="1.8">
+            {half && (
+              <defs>
+                <clipPath id={clipId}><rect x="0" y="0" width="12" height="24" /></clipPath>
+              </defs>
+            )}
+            <polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26" />
+            {(full || half) && (
+              <polygon
+                points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"
+                fill="#E8A020" stroke="#E8A020"
+                clipPath={half ? `url(#${clipId})` : undefined}
+              />
+            )}
+          </svg>
+        );
+      })}
+    </div>
+  );
+}
+
 interface CompanyCardProps {
   company:  CompanyItem;
   booked?:  BookingItem;
@@ -28,6 +57,14 @@ export default function CompanyCard({
         <div>
           <div className="company-name">{company.name}</div>
           <div className="company-sub">{company.address}</div>
+          {(company.averageRating !== undefined && company.averageRating > 0) && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 4 }}>
+              <StarDisplay rating={company.averageRating} />
+              <span style={{ fontSize: '0.75rem', color: 'var(--muted)' }}>
+                {company.averageRating.toFixed(1)} ({company.numReviews ?? 0} {(company.numReviews ?? 0) === 1 ? 'review' : 'reviews'})
+              </span>
+            </div>
+          )}
         </div>
       </Link>
 

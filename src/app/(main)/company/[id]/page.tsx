@@ -5,6 +5,7 @@ import { useParams } from 'next/navigation';
 
 import ReviewModal from '@/components/modals/ReviewModal';
 import DeleteReviewModal from '@/components/modals/DeleteReviewModal';
+import BookModal from '@/components/modals/BookModal';
 import Toast from '@/components/Toast';
 
 import getCompany   from '@/libs/getCompany';
@@ -12,6 +13,7 @@ import getBookings  from '@/libs/getBookings';
 import getReviews   from '@/libs/getReviews';
 import createReview from '@/libs/createReview';
 import editReview from '@/libs/editReview';
+import createBooking from '@/libs/createBooking';
 
 import { useToast } from '@/hooks/useToast';
 import { formatDate } from '@/utils/dateFormat';
@@ -89,6 +91,11 @@ export default function CompanyProfilePage() {
   const [deleteTarget, setDeleteTarget] = useState<ReviewItem | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
 
+  const [showBookModal,  setShowBookModal]  = useState(false);
+  const [bookDate,       setBookDate]       = useState('2022-05-10');
+  const [bookTime,       setBookTime]       = useState('09:00');
+  const [bookSubmitting, setBookSubmitting] = useState(false);
+
   const { toast, showToast } = useToast();
 
   // ── Load company
@@ -150,6 +157,22 @@ export default function CompanyProfilePage() {
     setLoadingPage(true);
     Promise.all([loadCompany(), loadReviews()]).finally(() => setLoadingPage(false));
   }, [loadCompany, loadReviews]);
+
+  async function handleBookSubmit() {
+    if (!company) return;
+    setBookSubmitting(true);
+    try {
+      const token = localStorage.getItem('jf_token') || '';
+      const newDate = `${bookDate}T${bookTime}:00`;
+      await createBooking(token, companyId, newDate);
+      showToast('✅ Booking confirmed!', 'success');
+      setShowBookModal(false);
+    } catch (err: unknown) {
+      showToast(`❌ ${err instanceof Error ? err.message : 'Booking failed'}`, 'error');
+    } finally {
+      setBookSubmitting(false);
+    }
+  }
 
   // ── Create or update review
   async function handleReviewSubmit(rating: number, comment: string) {
@@ -267,7 +290,7 @@ const visibleRevs = sortedReviews.slice(0, visibleCount);
                 {userReview ? '✏️ Edit Review' : 'Reviews Now!'}
               </button>
             )}
-            <a href="/book-company" className="btn-book-now">Book Now</a>
+            <a href="/book-company" className="btn-book-now" onClick={(e) => { e.preventDefault(); setShowBookModal(true); }}>Book Now</a>
           </div>
         </div>
       </div>
@@ -361,6 +384,21 @@ const visibleRevs = sortedReviews.slice(0, visibleCount);
           loading={deleteLoading}
           onConfirm={handleDeleteReview}
           onClose={() => setDeleteTarget(null)}
+        />
+      )}
+
+      {/* ── Book Modal */}
+      {showBookModal && company && (
+        <BookModal
+          company={company}
+          editMode={false}
+          date={bookDate}
+          time={bookTime}
+          submitting={bookSubmitting}
+          onDateChange={setBookDate}
+          onTimeChange={setBookTime}
+          onConfirm={handleBookSubmit}
+          onClose={() => setShowBookModal(false)}
         />
       )}
 
