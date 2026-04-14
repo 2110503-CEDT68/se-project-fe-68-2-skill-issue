@@ -310,7 +310,9 @@ const visibleRevs = sortedReviews.slice(0, visibleCount);
 
       {/* ── Reviews Feed */}
       {reviews.length === 0 ? (
-        <div className="no-reviews-placeholder">No Reviews Yet ...</div>
+        <div className="no-reviews-placeholder">No Reviews Yet ...
+        <h3>Be the first one to leave a review!!!!!</h3>
+        </div>
       ) : (
         <>
           <div className="reviews-feed">
