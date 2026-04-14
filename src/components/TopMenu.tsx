@@ -42,7 +42,9 @@ export default function TopMenu({ userName, isFull, backToDashboard }: TopMenuPr
         {isAdmin && <TopMenuItem title="Booking Monitor" pageRef="/admin/dashboard" />}
         {isAdmin && <TopMenuItem title="Review Monitor" pageRef="/admin/reviews" />}
         {backToDashboard ? (
-          !isAdmin && <TopMenuItem title="My Bookings" pageRef="/dashboard" />
+          !isAdmin ? (<TopMenuItem title="My Bookings" pageRef="/dashboard" />):
+          (<TopMenuItem title={isFull ? 'View Companies' : 'Book Company'} pageRef="/book-company"
+          />)
         ) : (
           <TopMenuItem
             title={isFull ? 'View Companies' : 'Book Company'}
