@@ -1,13 +1,11 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { useSelector } from 'react-redux';
-import { RootState } from '../redux/store';
-import { ReviewItem, BookingItem } from '../../interface';
+import { ReviewItem } from '../../interface';
 import getReviews from '../libs/getReviews';
+import getCompanies from '../libs/getCompanies';
 import deleteReview from '../libs/deleteReview';
 import editReview from '../libs/editReview';
-import createReview from '../libs/createReview';
 import ReviewModal from './modals/ReviewModal';
 import DeleteReviewModal from './modals/DeleteReviewModal';
 import Toast from './Toast';
@@ -37,16 +35,16 @@ function StarMini({ rating }: { rating: number }) {
   );
 }
 
-export default function MyReviewList() {
-  const bookings = useSelector((state: RootState) => state.book.bookItems);
+type MyReview = { companyId: string; companyName: string; review: ReviewItem };
 
-  const [reviewMap, setReviewMap] = useState<Record<string, ReviewItem | null>>({});
+export default function MyReviewList() {
+  const [myReviews, setMyReviews] = useState<MyReview[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentUserId, setCurrentUserId] = useState('');
   const [currentUserName, setCurrentUserName] = useState('');
 
-  const [editTarget, setEditTarget] = useState<{ booking: BookingItem; review: ReviewItem } | null>(null);
-  const [deleteTarget, setDeleteTarget] = useState<{ booking: BookingItem; review: ReviewItem } | null>(null);
+  const [editTarget, setEditTarget] = useState<MyReview | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<MyReview | null>(null);
   const [reviewSubmitting, setReviewSubmitting] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
 
@@ -64,23 +62,28 @@ export default function MyReviewList() {
   }, []);
 
   const loadReviews = useCallback(async () => {
-    if (!currentUserId || bookings.length === 0) { setLoading(false); return; }
+    if (!currentUserId) { setLoading(false); return; }
     setLoading(true);
-    const uniqueCompanyIds = [...new Set(bookings.filter(b => b.company?._id).map(b => b.company._id))];
-    await Promise.all(uniqueCompanyIds.map(async (companyId) => {
-      try {
-        const res = await getReviews(companyId);
-        const mine = res.data?.find(r => {
-          const uid = typeof r.user === 'object' ? r.user._id : r.user;
-          return uid === currentUserId;
-        }) ?? null;
-        setReviewMap(prev => ({ ...prev, [companyId]: mine }));
-      } catch {
-        setReviewMap(prev => ({ ...prev, [companyId]: null }));
-      }
-    }));
-    setLoading(false);
-  }, [currentUserId, bookings]);
+    try {
+      const token = localStorage.getItem('jf_token') || '';
+      const companiesRes = await getCompanies(token);
+      const companies = companiesRes.data || [];
+      const results: MyReview[] = [];
+      await Promise.all(companies.map(async (company) => {
+        try {
+          const res = await getReviews(company._id);
+          const mine = res.data?.find(r => {
+            const uid = typeof r.user === 'object' ? r.user._id : r.user;
+            return uid === currentUserId;
+          });
+          if (mine) results.push({ companyId: company._id, companyName: company.name, review: mine });
+        } catch { /* skip */ }
+      }));
+      setMyReviews(results);
+    } catch { /* ignore */ } finally {
+      setLoading(false);
+    }
+  }, [currentUserId]);
 
   useEffect(() => { loadReviews(); }, [loadReviews]);
 
@@ -91,7 +94,7 @@ export default function MyReviewList() {
       const token = localStorage.getItem('jf_token') || '';
       const res = await editReview(token, editTarget.review._id, rating, comment);
       const updated: ReviewItem = Array.isArray(res.data) ? res.data[0] : { ...editTarget.review, rating, comment };
-      setReviewMap(prev => ({ ...prev, [editTarget.booking.company._id]: updated }));
+      setMyReviews(prev => prev.map(r => r.companyId === editTarget.companyId ? { ...r, review: updated } : r));
       showToast('✅ Review updated!', 'success');
       setEditTarget(null);
     } catch (err: unknown) {
@@ -107,7 +110,7 @@ export default function MyReviewList() {
     try {
       const token = localStorage.getItem('jf_token') || '';
       await deleteReview(token, deleteTarget.review._id);
-      setReviewMap(prev => ({ ...prev, [deleteTarget.booking.company._id]: null }));
+      setMyReviews(prev => prev.filter(r => r.companyId !== deleteTarget.companyId));
       showToast('✅ Review deleted.', 'success');
       setDeleteTarget(null);
     } catch (err: unknown) {
@@ -116,8 +119,6 @@ export default function MyReviewList() {
       setDeleteLoading(false);
     }
   }
-
-  const reviewedBookings = bookings.filter(b => b.company?._id && reviewMap[b.company._id]);
 
   if (loading) return (
     <div className="bookings-list">
@@ -130,7 +131,7 @@ export default function MyReviewList() {
     </div>
   );
 
-  if (reviewedBookings.length === 0) return (
+  if (myReviews.length === 0) return (
     <p style={{ color: 'var(--muted)', fontSize: '0.9rem', padding: '12px 0' }}>
       You haven't reviewed any company yet.
     </p>
@@ -139,40 +140,37 @@ export default function MyReviewList() {
   return (
     <>
       <div className="bookings-list">
-        {reviewedBookings.map((booking, idx) => {
-          const review = reviewMap[booking.company._id]!;
-          return (
-            <div key={booking._id} className="booking-card" style={{ animationDelay: `${idx * 0.07}s` }}>
-              <div className="booking-card-left">
-                <div className="booking-number">{idx + 1}</div>
-                <div className="booking-info">
-                  <span className="company-name-btn" style={{ cursor: 'default' }}>
-                    {booking.company?.name || 'Unknown Company'}
+        {myReviews.map((item, idx) => (
+          <div key={item.companyId} className="booking-card" style={{ animationDelay: `${idx * 0.07}s` }}>
+            <div className="booking-card-left">
+              <div className="booking-number">{idx + 1}</div>
+              <div className="booking-info">
+                <span className="company-name-btn" style={{ cursor: 'default' }}>
+                  {item.companyName}
+                </span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 6 }}>
+                  <StarMini rating={item.review.rating} />
+                  <span style={{ fontSize: '0.8rem', fontWeight: 600, color: '#E8A020' }}>
+                    {item.review.rating}/5
                   </span>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 6 }}>
-                    <StarMini rating={review.rating} />
-                    <span style={{ fontSize: '0.8rem', fontWeight: 600, color: '#E8A020' }}>
-                      {review.rating}/5
-                    </span>
-                  </div>
-                  <p style={{ fontSize: '0.83rem', color: 'var(--muted)', marginTop: 4 }}>
-                    "{review.comment}"
-                  </p>
                 </div>
-              </div>
-              <div className="booking-actions">
-                <button className="btn-edit-date" onClick={() => setEditTarget({ booking, review })}>✏️ Edit</button>
-                <button className="btn-cancel btn-delete-review" onClick={() => setDeleteTarget({ booking, review })}>Delete</button>
+                <p style={{ fontSize: '0.83rem', color: 'var(--muted)', marginTop: 4 }}>
+                  "{item.review.comment}"
+                </p>
               </div>
             </div>
-          );
-        })}
+            <div className="booking-actions">
+              <button className="btn-edit-date" onClick={() => setEditTarget(item)}>✏️ Edit</button>
+              <button className="btn-cancel btn-delete-review" onClick={() => setDeleteTarget(item)}>Delete</button>
+            </div>
+          </div>
+        ))}
       </div>
 
       {editTarget && (
         <ReviewModal
           userName={currentUserName}
-          bookingDate={editTarget.booking.bookingDate}
+          bookingDate=""
           existingReview={editTarget.review}
           submitting={reviewSubmitting}
           onConfirm={confirmEdit}
