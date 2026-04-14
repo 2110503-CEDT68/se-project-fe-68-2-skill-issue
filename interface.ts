@@ -18,6 +18,7 @@ export interface CompanyItem {
   website?: string;
   description?: string;
   telephone_number?: string;
+  imgSrc?:string;
   averageRating?: number;
   numReviews?: number;
 }
@@ -137,6 +138,7 @@ export interface CompanyFormData {
   website: string;
   description: string;
   telephone_number: string;
+  imgSrc:string;
 }
 
 export interface AdminCompanyModalProps {

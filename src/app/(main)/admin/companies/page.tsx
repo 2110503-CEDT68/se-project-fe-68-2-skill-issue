@@ -18,7 +18,7 @@ import '@/styles/book-company.css';
 
 
 const emptyForm: CompanyFormData = {
-  name: '', address: '', website: '', description: '', telephone_number: '',
+  name: '', address: '', website: '', description: '', telephone_number: '',imgSrc:''
 };
 
 export default function AdminCompaniesPage() {
@@ -41,6 +41,7 @@ export default function AdminCompaniesPage() {
     if (!token) return;
     try {
       const res = await getCompanies(token);
+       console.log(res.data);
       setCompanies(res.data);
     } catch {
       showToast('Failed to load companies', 'error');
@@ -54,6 +55,20 @@ export default function AdminCompaniesPage() {
   const filtered = companies.filter((c) =>
     c.name.toLowerCase().includes(search.toLowerCase())
   );
+
+//--ImageHandle
+  function CompanyLogo({ src, name }: { src?: string; name: string }) {
+  const [imgError, setImgError] = useState(false);
+  if (!src || imgError) return <span>🏢</span>;
+  return (
+    <img
+      src={src}
+      alt={name}
+      className="company-img"
+      onError={() => setImgError(true)}
+    />
+  );
+}
 
   // ── Open modals
   function openCreate() {
@@ -70,6 +85,7 @@ export default function AdminCompaniesPage() {
       website: c.website || '',
       description: c.description || '',
       telephone_number: c.telephone_number || '',
+      imgSrc: c.imgSrc || ''
     });
   }
   function closeForm() {
@@ -166,7 +182,9 @@ export default function AdminCompaniesPage() {
           {filtered.map((c, i) => (
             <div key={c._id} className="company-card" style={{ animationDelay: `${i * 0.05}s` }}>
               <div className="company-top">
-                <div className="company-logo">🏢</div>
+                <div className="company-logo">
+                  <CompanyLogo src={c.imgSrc} name={c.name} />
+                    </div>
                 <div>
                   <div className="company-name">{c.name}</div>
                   {c.address && <div className="company-sub">{c.address}</div>}
@@ -242,6 +260,13 @@ export default function AdminCompaniesPage() {
                 />
               </label>
             </div>
+            <label className="admin-label">
+                Image URL
+                <input className="admin-input"
+                value={formData.imgSrc}
+                onChange={(e) => handleFormChange('imgSrc', e.target.value)}
+                placeholder="Logo image"/>
+            </label>
           </div>
 
           <div className="modal-actions" style={{ marginTop: 20 }}>

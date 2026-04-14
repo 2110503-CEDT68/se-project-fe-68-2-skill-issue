@@ -3,6 +3,20 @@
 import Link from 'next/link';
 import { CompanyItem, BookingItem } from '../../interface';
 import { formatDate } from '../utils/dateFormat';
+import { useState } from 'react';
+
+function CompanyLogo({ src, name }: { src?: string; name: string }) {
+  const [imgError, setImgError] = useState(false);
+  if (!src || imgError) return <span>🏢</span>;
+  return (
+    <img
+      src={src}
+      alt={name}
+      className="company-img"
+      onError={() => setImgError(true)}
+    />
+  );
+}
 
 function StarDisplay({ rating }: { rating: number }) {
   return (
@@ -53,7 +67,7 @@ export default function CompanyCard({
     >
       {/* Clickable header → Company Profile */}
       <Link href={`/company/${company._id}`} className="company-top company-top-link">
-        <div className="company-logo">🏢</div>
+        <div className="company-logo"><CompanyLogo src={company.imgSrc} name={company.name} /></div>
         <div>
           <div className="company-name">{company.name}</div>
           <div className="company-sub">{company.address}</div>

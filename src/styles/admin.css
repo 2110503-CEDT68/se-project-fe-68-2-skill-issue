@@ -465,3 +465,25 @@
   .admin-nav-links { width: 100%; }
   .admin-nav-links .btn-primary { flex: 1; justify-content: center; }
 }
+
+
+.company-logo {
+  width: 56px;
+  height: 56px;
+  min-width: 56px;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #EFECE8;
+  border: 1.5px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+}
+
+.company-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}

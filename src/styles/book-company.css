@@ -36,7 +36,7 @@
 
 /* ── Company Card */
 .company-card {
-  background: var(--surface); border: 1.5px solid var(--border);
+  background: var(--surface); border:  1px solid #E0DAD4;
   border-radius: var(--radius); padding: 22px;
   display: flex; flex-direction: column; gap: 12px;
   animation: fadeUp .4s ease both;
@@ -144,3 +144,19 @@
 }
 .company-top-link:hover { background: var(--accent-light); }
 .company-top-link:hover .company-name { color: var(--accent); }
+
+
+.company-logo {
+  width: 56px;
+  height: 56px;
+  border-radius: 12px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.company-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
