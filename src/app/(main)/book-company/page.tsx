@@ -1,5 +1,7 @@
 'use client';
 
+import { useEffect, useState, useCallback } from 'react';
+import Link from 'next/link';
 import CompanyCard from '@/components/CompanyCard';
 import SearchBar   from '@/components/SearchBar';
 import BookModal   from '@/components/modals/BookModal';
