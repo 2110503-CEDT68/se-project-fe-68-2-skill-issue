@@ -105,10 +105,6 @@ export default function Card({ booking, index, onEdit, onCancel, onDetail, onDel
           </>
         ) : userReview ? (
           <>
-            <div className="review-preview">
-              <StarMini rating={userReview.rating} />
-              <span className="review-preview-comment">"{userReview.comment}"</span>
-            </div>
             <div style={{ display: 'flex', gap: 6 }}>
               <button className="btn-edit-date" onClick={() => onEditReview?.(booking, userReview)}>✏️ Edit Review</button>
               <button className="btn-cancel btn-delete-review"

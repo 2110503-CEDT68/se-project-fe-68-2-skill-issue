@@ -1,10 +1,12 @@
 'use client';
 //ลบ auth guard ออก อย่าลืมเติมใหม่ทีหลัง
+import { useState } from 'react';
 import { useSelector } from 'react-redux';
 import Link from 'next/link';
 
-import Banner      from '@/components/Banner';
-import BookingList from '@/components/BookingList';
+import Banner        from '@/components/Banner';
+import BookingList   from '@/components/BookingList';
+import MyReviewList  from '@/components/MyReviewList';
 
 import { RootState } from '@/redux/store';
 
@@ -16,6 +18,7 @@ export default function DashboardPage() {
   const bookingCount = useSelector((state: RootState) => state.book.bookItems.length);
   const remaining    = Math.max(0, MAX_BOOKINGS - bookingCount);
   const isFull       = bookingCount >= MAX_BOOKINGS;
+  const [tab, setTab] = useState<'bookings' | 'reviews'>('bookings');
 
   return (
     <div className="container">
@@ -40,16 +43,25 @@ export default function DashboardPage() {
       </div>
 
       <div className="section-header">
-        <h2 className="section-title">Booked Sessions</h2>
-        <Link href="/book-company" className="btn-primary">
-          <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-            <path d="M12 5v14M5 12h14" />
-          </svg>
-          {isFull ? 'View Companies' : 'Book a Company'}
-        </Link>
+        <div className="tab-toggle">
+          <button className={`tab-btn${tab === 'bookings' ? ' active' : ''}`} onClick={() => setTab('bookings')}>
+            Booked Sessions
+          </button>
+          <button className={`tab-btn${tab === 'reviews' ? ' active' : ''}`} onClick={() => setTab('reviews')}>
+            My Reviews
+          </button>
+        </div>
+        {tab === 'bookings' && (
+          <Link href="/book-company" className="btn-primary">
+            <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+              <path d="M12 5v14M5 12h14" />
+            </svg>
+            {isFull ? 'View Companies' : 'Book a Company'}
+          </Link>
+        )}
       </div>
 
-      <BookingList />
+      {tab === 'bookings' ? <BookingList /> : <MyReviewList />}
     </div>
   );
 }

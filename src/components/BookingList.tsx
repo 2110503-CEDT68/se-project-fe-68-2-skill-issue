@@ -77,7 +77,7 @@ export default function BookingList({ items }: { items?: BookingItem[] }) {
 
   useEffect(() => { loadBookings(); }, [loadBookings]);
 
-  // ── After bookings load, fetch reviews for past bookings
+  // ── After bookings load, fetch reviews for all bookings
   useEffect(() => {
     if (loading || bookings.length === 0) return;
 
@@ -87,8 +87,7 @@ export default function BookingList({ items }: { items?: BookingItem[] }) {
     })();
     if (!userId) return;
 
-    const pastBookings = bookings.filter(b => b.bookingDate && new Date(b.bookingDate) < new Date());
-    const uniqueCompanyIds = [...new Set(pastBookings.filter(b => b.company?._id).map(b => b.company._id))];
+    const uniqueCompanyIds = [...new Set(bookings.filter(b => b.company?._id).map(b => b.company._id))];
 
     uniqueCompanyIds.forEach(async (companyId) => {
       try {

@@ -82,7 +82,6 @@ export default function CompanyProfilePage() {
 
   const [currentUserId,   setCurrentUserId]   = useState('');
   const [currentUserName, setCurrentUserName] = useState('');
-  const [canReview,       setCanReview]       = useState(false);
   const [userReview,      setUserReview]       = useState<ReviewItem | null>(null);
   const [userBookingDate, setUserBookingDate] = useState('');
 
@@ -130,14 +129,12 @@ export default function CompanyProfilePage() {
     if (!currentUserId || !companyId) return;
     const token = localStorage.getItem('jf_token') || '';
     getBookings(token).then(res => {
-      const pastBooking = (res.data || []).find(b => {
+      const booking = (res.data || []).find(b => {
         const cId = typeof b.company === 'object' ? b.company._id : b.company;
-        const isPast = b.bookingDate ? new Date(b.bookingDate) < new Date() : false;
-        return cId === companyId && isPast;
+        return cId === companyId;
       });
-      if (pastBooking) {
-        setCanReview(true);
-        setUserBookingDate(formatDate(pastBooking.bookingDate));
+      if (booking) {
+        setUserBookingDate(formatDate(booking.bookingDate));
       }
     }).catch(() => {});
   }, [currentUserId, companyId]);
@@ -285,7 +282,7 @@ const visibleRevs = sortedReviews.slice(0, visibleCount);
 
           {/* Action buttons */}
           <div className="company-actions">
-            {canReview && (
+            {currentUserId && (
               <button className="btn-review-now" onClick={() => setShowModal(true)}>
                 {userReview ? '✏️ Edit Review' : 'Reviews Now!'}
               </button>
