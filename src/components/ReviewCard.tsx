@@ -48,7 +48,7 @@ export default function ReviewCard({
     typeof review.user === 'object'
       ? review.user._id === currentUserId
       : review.user === currentUserId;
-
+  console.log(formatDate(review.editedAt || review.createdAt));
   return (
     <div
       className="review-card"
@@ -63,7 +63,7 @@ export default function ReviewCard({
           </span>
           <span className="meta-tag">
             <CalendarIcon />
-            {formatDate(review.editedAt)}
+            {formatDate(review.edited ? review.editedAt: review.createdAt)}
           </span>
         </div>
 
