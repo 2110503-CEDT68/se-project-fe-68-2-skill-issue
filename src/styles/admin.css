@@ -272,16 +272,16 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 6px 12px;
+  padding: 8px 14px; /* เพิ่ม padding ให้ดูสมดุลกับปุ่มที่หายไป */
   background: #FFF0EC;
   border: 1.5px solid var(--accent);
-  border-radius: 20px;
-  font-size: .8rem;
+  border-radius: 12px; /* หรือ 20px ตามเดิมที่คุณชอบ */
+  font-size: .88rem; /* ปรับให้ใกล้เคียงกับขนาดปุ่มเดิม */
   font-weight: 600;
   color: var(--accent);
-  margin-bottom: 18px;
+  margin-bottom: 0px; /* ลด margin ลงเพราะตอนนี้มันมาแทนที่ปุ่มแล้ว */
+  transition: all .2s ease;
 }
-
 .badge-clear {
   background: none;
   border: none;

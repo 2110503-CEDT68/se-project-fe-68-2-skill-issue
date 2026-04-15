@@ -40,6 +40,7 @@ interface ReviewWithCompany extends ReviewItem {
 }
 
 type SortOption = 'date-desc' | 'date-asc';
+type EditedFilter = 'all' | 'edited' | 'original';
 
 export default function AdminReviewsPage() {
   const [companies, setCompanies]   = useState<CompanyItem[]>([]);
@@ -121,6 +122,8 @@ export default function AdminReviewsPage() {
   const filteredReviews = reviews
     .filter((r) => {
       if (selectedCompany && r.companyId !== selectedCompany._id) return false;
+      if (editedFilter === 'edited' && !r.edited) return false;
+      if (editedFilter === 'original' && r.edited) return false;
 
       const q = search.toLowerCase();
       if (!q) return true;
@@ -179,11 +182,21 @@ export default function AdminReviewsPage() {
           <div className="stat-value">{loading ? '—' : uniqueUsers}</div>
         </div>
       </div>
-
-      {/* ── Section header with sort + edited filter */}
-      <div className="review-sort-row">
+      <div className="review-sort-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <h2 className="section-title">All Reviews</h2>
-        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+        
+        {/* กลุ่มของ Select ที่จะให้ชิดขวา */}
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          <select
+            value={editedFilter}
+            onChange={(e) => setEditedFilter(e.target.value as EditedFilter)}
+            className="filter-select"
+          >
+            <option value="all">All Status</option>
+            <option value="edited">Edited Only ✏️</option>
+            <option value="original">Original Only</option>
+          </select>
+
           <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value as SortOption)}
@@ -202,27 +215,31 @@ export default function AdminReviewsPage() {
           onChange={setSearch}
           placeholder="Search by Keywords"
         />
-        <button className="btn-select-company" onClick={() => { setPickerOpen(true); setPickerSearch(''); }}>
-          Select Companies
-        </button>
-      </div>
-
-      {/* Active filters badges */}
-      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: (selectedCompany || editedFilter !== 'all') ? 18 : 0 }}>
-        {selectedCompany && (
+        {selectedCompany ? (
+          /* ── แสดงปุ่มล่าง (Badge) เมื่อเลือกบริษัทแล้ว ── */
           <div className="active-company-badge">
-            🏢 {selectedCompany.name}
-            <button className="badge-clear" onClick={() => setSelectedCompany(null)} title="Clear filter">✕</button>
+            
+            <button 
+              className="badge-clear" 
+              onClick={() => setSelectedCompany(null)} 
+              title="Clear filter"
+            >
+              🏢 {selectedCompany.name}
+              ✕
+            </button>
           </div>
-        )}
-        {editedFilter !== 'all' && (
-          <div className="active-company-badge active-edited-badge">
-            ✏️ {editedFilter === 'edited' ? 'Edited Only' : 'Original Only'}
-            <button className="badge-clear" onClick={() => setEditedFilter('all')} title="Clear filter">✕</button>
+        ) : (
+          /* ── แสดงปุ่มบน เมื่อยังไม่ได้เลือกบริษัท ── */
+          <div className="select-company-container"> {/* ใส่ div ครอบเพื่อให้สไตล์เหมือนเดิมถ้าจำเป็น */}
+            <button 
+              className="btn-select-company" 
+              onClick={() => { setPickerOpen(true); setPickerSearch(''); }}
+            >
+              Select Companies
+            </button>
           </div>
         )}
       </div>
-
       {/* ── Review list */}
       {loading ? (
         <div className="admin-review-skeleton">

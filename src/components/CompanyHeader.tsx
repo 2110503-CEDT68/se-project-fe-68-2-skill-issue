@@ -38,6 +38,7 @@ interface CompanyHeaderProps {
   currentUserId: string;
   /** true if the logged-in user already has a review for this company */
   hasUserReview: boolean;
+  isFull:boolean;
   onOpenReviewModal: () => void;
   onOpenBookModal: () => void;
 }
@@ -54,6 +55,7 @@ export default function CompanyHeader({
   hasUserReview,
   onOpenReviewModal,
   onOpenBookModal,
+  isFull
 }: CompanyHeaderProps) {
   const avgRating = company.averageRating ?? 0;
 
@@ -92,9 +94,14 @@ export default function CompanyHeader({
               {hasUserReview ? '✏️ Edit Review' : 'Reviews Now!'}
             </button>
           )}
-          <button className="btn-book-now" onClick={onOpenBookModal}>
+          {isFull ? (
+            <div className="btn-book-now" style={{ pointerEvents: 'none', opacity: 0.7 }}>Booking limit reached</div>
+          ) : (
+            <button className="btn-book-now" onClick={onOpenBookModal}>
             Book Now
-          </button>
+            </button>
+          )}
+          
         </div>
       </div>
     </div>
