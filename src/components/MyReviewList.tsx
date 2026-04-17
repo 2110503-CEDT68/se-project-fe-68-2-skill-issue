@@ -2,20 +2,18 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { ReviewItem } from '../../interface';
-import getReviews from '../libs/getReviews';
 import getCompanies from '../libs/getCompanies';
-import deleteReview from '../libs/deleteReview';
-import editReview from '../libs/editReview';
-import ReviewModal from './modals/ReviewModal';
+import EditReviewModal from './modals/EditReviewModal';
 import DeleteReviewModal from './modals/DeleteReviewModal';
 import Toast from './Toast';
+import { useReviews } from '../hooks/useReviews';
 import { useToast } from '../hooks/useToast';
 import { formatDate, getEffectiveDate } from '@/utils/dateFormat';
 
 function StarMini({ rating }: { rating: number }) {
   return (
     <span style={{ display: 'inline-flex', gap: 1 }}>
-      {[1,2,3,4,5].map(s => {
+      {[1, 2, 3, 4, 5].map((s) => {
         const full = rating >= s;
         const half = !full && rating >= s - 0.5;
         const clipId = `mrl-half-${s}`;
@@ -34,92 +32,69 @@ function StarMini({ rating }: { rating: number }) {
   );
 }
 
-type MyReview = { companyId: string; companyName: string; review: ReviewItem };
+type MyReviewDisplay = { companyId: string; companyName: string; review: ReviewItem };
 
 export default function MyReviewList() {
-  const [myReviews, setMyReviews] = useState<MyReview[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [currentUserId, setCurrentUserId] = useState('');
-  const [currentUserName, setCurrentUserName] = useState('');
+  const [displayReviews, setDisplayReviews] = useState<MyReviewDisplay[]>([]);
+  const [localLoading, setLocalLoading] = useState(true);
+  const [userInfo, setUserInfo] = useState({ id: '', name: '' });
 
-  const [editTarget, setEditTarget] = useState<MyReview | null>(null);
-  const [deleteTarget, setDeleteTarget] = useState<MyReview | null>(null);
-  const [reviewSubmitting, setReviewSubmitting] = useState(false);
-  const [deleteLoading, setDeleteLoading] = useState(false);
+  const {
+    fetchReviews,
+    handleUpdate,
+    handleConfirmDelete,
+    editTarget,
+    setEditTarget,
+    deleteTarget,
+    setDeleteTarget,
+    isSubmitting
+  } = useReviews();
 
-  const { toast, showToast } = useToast();
+  const { toast } = useToast();
 
   useEffect(() => {
     try {
       const raw = localStorage.getItem('jf_user');
       if (raw) {
         const u = JSON.parse(raw);
-        setCurrentUserId(u._id || '');
-        setCurrentUserName(u.name || '');
+        setUserInfo({ id: u._id || '', name: u.name || '' });
       }
     } catch { /* ignore */ }
   }, []);
 
-  const loadReviews = useCallback(async () => {
-    if (!currentUserId) { setLoading(false); return; }
-    setLoading(true);
+  const loadAllMyReviews = useCallback(async () => {
+    if (!userInfo.id) { setLocalLoading(false); return; }
+    setLocalLoading(true);
     try {
       const token = localStorage.getItem('jf_token') || '';
       const companiesRes = await getCompanies(token);
       const companies = companiesRes.data || [];
-      const results: MyReview[] = [];
+      const results: MyReviewDisplay[] = [];
+
       await Promise.all(companies.map(async (company) => {
         try {
-          const res = await getReviews(company._id);
-          const mine = res.data?.find(r => {
+          // fetchReviews ต้อง return ReviewItem[] (แก้ใน useReviews.ts แล้ว)
+          const reviewsData = await fetchReviews(company._id); 
+          const mine = reviewsData?.find((r: ReviewItem) => {
             const uid = typeof r.user === 'object' ? r.user._id : r.user;
-            return uid === currentUserId;
+            return uid === userInfo.id;
           });
-          if (mine) results.push({ companyId: company._id, companyName: company.name, review: mine });
+          if (mine) {
+            results.push({ companyId: company._id, companyName: company.name, review: mine });
+          }
         } catch { /* skip */ }
       }));
-      setMyReviews(results);
+
+      setDisplayReviews(results);
     } catch { /* ignore */ } finally {
-      setLoading(false);
+      setLocalLoading(false);
     }
-  }, [currentUserId]);
+  }, [userInfo.id, fetchReviews]);
 
-  useEffect(() => { loadReviews(); }, [loadReviews]);
+  useEffect(() => { loadAllMyReviews(); }, [loadAllMyReviews]);
 
-  async function confirmEdit(rating: number, comment: string) {
-    if (!editTarget) return;
-    setReviewSubmitting(true);
-    try {
-      const token = localStorage.getItem('jf_token') || '';
-      const res = await editReview(token, editTarget.review._id, rating, comment);
-      const updated: ReviewItem = Array.isArray(res.data) ? res.data[0] : { ...editTarget.review, rating, comment };
-      setMyReviews(prev => prev.map(r => r.companyId === editTarget.companyId ? { ...r, review: updated } : r));
-      showToast('✅ Review updated!', 'success');
-      setEditTarget(null);
-    } catch (err: unknown) {
-      showToast(`❌ ${err instanceof Error ? err.message : 'Failed'}`, 'error');
-    } finally {
-      setReviewSubmitting(false);
-    }
-  }
-
-  async function confirmDelete() {
-    if (!deleteTarget) return;
-    setDeleteLoading(true);
-    try {
-      const token = localStorage.getItem('jf_token') || '';
-      await deleteReview(token, deleteTarget.review._id);
-      setMyReviews(prev => prev.filter(r => r.companyId !== deleteTarget.companyId));
-      showToast('✅ Review deleted.', 'success');
-      setDeleteTarget(null);
-    } catch (err: unknown) {
-      showToast(`❌ ${err instanceof Error ? err.message : 'Failed'}`, 'error');
-    } finally {
-      setDeleteLoading(false);
-    }
-  }
-
-  if (loading) return (
+  // UI สำหรับ Loading State
+  if (localLoading) return (
     <div className="bookings-list">
       {[0, 1].map(i => (
         <div key={i} className="booking-skeleton">
@@ -127,73 +102,95 @@ export default function MyReviewList() {
           <div className="sk-line sk-medium" />
         </div>
       ))}
+      <Toast toast={toast} />
     </div>
-  );
-
-  if (myReviews.length === 0) return (
-    <p style={{ color: 'var(--muted)', fontSize: '0.9rem', padding: '12px 0' }}>
-      You haven't reviewed any company yet.
-    </p>
   );
 
   return (
     <>
-      <div className="bookings-list">
-        {myReviews.map((item, idx) => (
-          <div key={item.companyId} className="booking-card" style={{ animationDelay: `${idx * 0.07}s` }}>
-            <div className="booking-card-left">
-              <div className="booking-number">{idx + 1}</div>
-              <div className="booking-info">
-                <span className="company-name-btn" style={{ cursor: 'default' }}>
-                  {item.companyName}
-                </span>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 6 }}>
-                  <StarMini rating={item.review.rating} />
-                  <span style={{ fontSize: '0.8rem', fontWeight: 600, color: '#E8A020' }}>
-                    {item.review.rating}/5
+      {displayReviews.length === 0 ? (
+        <p style={{ color: 'var(--muted)', fontSize: '0.9rem', padding: '12px 0' }}>
+          You haven't reviewed any company yet.
+        </p>
+      ) : (
+        <div className="bookings-list">
+          {displayReviews.map((item, idx) => (
+            <div key={item.companyId} className="booking-card" style={{ animationDelay: `${idx * 0.07}s` }}>
+              <div className="booking-card-left">
+                <div className="booking-number">{idx + 1}</div>
+                <div className="booking-info">
+                  <span className="company-name-btn" style={{ cursor: 'default' }}>
+                    {item.companyName}
                   </span>
-                </div>
-                <p style={{ fontSize: '0.83rem', color: 'var(--muted)', marginTop: 4 }}>
-                  "{item.review.comment}"
-                </p>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 6, fontSize: '0.76rem', color: 'var(--muted)' }}>
-                  <svg width="11" height="11" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                    <rect x="3" y="4" width="18" height="18" rx="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" />
-                  </svg>
-                  {formatDate(getEffectiveDate(item.review))}
-                  {item.review.edited && (
-                    <span className="edited-badge">✏️ edited</span>
-                  )}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 6 }}>
+                    <StarMini rating={item.review.rating} />
+                    <span style={{ fontSize: '0.8rem', fontWeight: 600, color: '#E8A020' }}>
+                      {item.review.rating}/5
+                    </span>
+                  </div>
+                  <p style={{ fontSize: '0.83rem', color: 'var(--muted)', marginTop: 4 }}>
+                    "{item.review.comment}"
+                  </p>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 6, fontSize: '0.76rem', color: 'var(--muted)' }}>
+                    <svg width="11" height="11" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                      <rect x="3" y="4" width="18" height="18" rx="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" />
+                    </svg>
+                    {formatDate(item.review.effectiveDate)}
+                    {item.review.edited && <span className="edited-badge">✏️ edited</span>}
+                  </div>
                 </div>
               </div>
+              <div className="booking-actions">
+                <button className="btn-edit-date" onClick={() => setEditTarget(item.review)}>✏️ Edit</button>
+                <button className="btn-cancel btn-delete-review" onClick={() => setDeleteTarget(item.review)}>Delete</button>
+              </div>
             </div>
-            <div className="booking-actions">
-              <button className="btn-edit-date" onClick={() => setEditTarget(item)}>✏️ Edit</button>
-              <button className="btn-cancel btn-delete-review" onClick={() => setDeleteTarget(item)}>Delete</button>
-            </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
 
+      {/* Modals */}
       {editTarget && (
-        <ReviewModal
-          userName={currentUserName}
-          bookingDate=""
-          existingReview={editTarget.review}
-          submitting={reviewSubmitting}
-          onConfirm={confirmEdit}
+        <EditReviewModal
+          userName={userInfo.name}
+          bookingDate={formatDate(editTarget.effectiveDate)}
+          existingReview={editTarget}
+          submitting={isSubmitting}
+          onConfirm={async (rating, comment) => {
+            const success = await handleUpdate(rating, comment);
+            if (success) {
+            setDisplayReviews(prev => prev.map(r => 
+              r.review._id === editTarget._id 
+                ? { 
+                    ...r, 
+                    review: { 
+                      ...r.review, 
+                      rating, 
+                      comment, 
+                      edited: true,
+                      effectiveDate: new Date().toISOString() 
+                    } 
+                  } 
+                : r
+            ));
+          }
+          }}
           onClose={() => setEditTarget(null)}
         />
       )}
 
       {deleteTarget && (
         <DeleteReviewModal
-          loading={deleteLoading}
-          onConfirm={confirmDelete}
+          loading={isSubmitting}
+          onConfirm={async () => {
+            const success = await handleConfirmDelete();
+            if (success) {
+              setDisplayReviews(prev => prev.filter(r => r.review._id !== deleteTarget._id));
+            }
+          }}
           onClose={() => setDeleteTarget(null)}
         />
       )}
-
       <Toast toast={toast} />
     </>
   );

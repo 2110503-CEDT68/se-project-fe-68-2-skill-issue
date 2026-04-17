@@ -1,14 +1,13 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import ModalWrapper from '../ModalWrapper';
-import { ReviewItem } from '../../../interface';
 import '@/styles/review.css';
 
-interface ReviewModalProps {
+interface CreateReviewModalProps {
   userName: string;
-  bookingDate: string;
-  existingReview?: ReviewItem | null;
+  companyName: string;
+  bookingDate: string; // วันที่ที่จองไว้ (เพื่อบอกว่ารีวิวจากการจองรอบไหน)
   submitting: boolean;
   onConfirm: (rating: number, comment: string) => void;
   onClose: () => void;
@@ -23,20 +22,13 @@ function StarIcon({ filled }: { filled: boolean }) {
   );
 }
 
-export default function ReviewModal({
-  userName, bookingDate, existingReview, submitting, onConfirm, onClose
-}: ReviewModalProps) {
-  const [rating,  setRating]  = useState(existingReview?.rating  ?? 0);
-  const [hover,   setHover]   = useState(0);
-  const [comment, setComment] = useState(existingReview?.comment ?? '');
-  const [error,   setError]   = useState('');
-
-  useEffect(() => {
-    if (existingReview) {
-      setRating(existingReview.rating);
-      setComment(existingReview.comment);
-    }
-  }, [existingReview]);
+export default function CreateReviewModal({
+  userName, companyName, bookingDate, submitting, onConfirm, onClose
+}: CreateReviewModalProps) {
+  const [rating, setRating] = useState(0);
+  const [hover, setHover] = useState(0);
+  const [comment, setComment] = useState('');
+  const [error, setError] = useState('');
 
   function handleSubmit() {
     if (rating === 0) { setError('Please select a star rating.'); return; }
@@ -46,12 +38,12 @@ export default function ReviewModal({
     onConfirm(rating, comment.trim());
   }
 
-  const isEdit = !!existingReview;
-
   return (
     <ModalWrapper open onClose={onClose} className="review-modal-inner">
-      {/* Header meta */}
+      <h2 style={{ marginBottom: 16, fontSize: '1.2rem', fontWeight: 600 }}>{companyName}</h2>
+      
       <div className="review-modal-meta" style={{ marginBottom: 18 }}>
+        {/* User Info */}
         <span className="meta-tag meta-user">
           <svg width="11" height="11" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
             <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
@@ -59,6 +51,8 @@ export default function ReviewModal({
           </svg>
           {userName}
         </span>
+
+        {/* Booking Date Info */}
         <span className="meta-tag">
           <svg width="11" height="11" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
             <rect x="3" y="4" width="18" height="18" rx="2" />
@@ -66,8 +60,7 @@ export default function ReviewModal({
             <line x1="8" y1="2" x2="8" y2="6" />
             <line x1="3" y1="10" x2="21" y2="10" />
           </svg>
-          {bookingDate}
-          <span style={{ marginLeft: 2 }}>✏️</span>
+          <span style={{ marginLeft: 4 }}>{bookingDate || 'No booking date'}</span>
         </span>
       </div>
 
@@ -80,14 +73,14 @@ export default function ReviewModal({
           maxLength={100}
           onChange={(e) => { setComment(e.target.value); setError(''); }}
         />
-        <span className="textarea-limit">(limit 100 characters)</span>
+        <span className="textarea-limit">{comment.length}/100 characters</span>
       </div>
 
-      {/* Star input */}
+      {/* Star Rating */}
       <div className="star-rating-input">
         {[1, 2, 3, 4, 5].map((star) => (
-          <button
-            key={star}
+          <button 
+            key={star} 
             className="star-btn"
             onMouseEnter={() => setHover(star)}
             onMouseLeave={() => setHover(0)}
@@ -99,21 +92,23 @@ export default function ReviewModal({
         ))}
       </div>
 
-      {error && (
-        <p style={{ fontSize: '.8rem', color: '#A02020', marginBottom: 12 }}>{error}</p>
-      )}
+      {error && <p style={{ fontSize: '.8rem', color: '#A02020', marginBottom: 12 }}>{error}</p>}
 
-      {/* Actions */}
+      {/* Modal Actions */}
       <div className="modal-actions">
         <button className="btn-modal-cancel" onClick={onClose} disabled={submitting}>
           Cancel
         </button>
-        <button
-          className="btn-modal-confirm"
-          onClick={handleSubmit}
+        <button 
+          className="btn-modal-confirm" 
+          onClick={handleSubmit} 
           disabled={submitting}
         >
-          {submitting ? <><span className="btn-spinner" />Saving…</> : (isEdit ? 'Save Changes' : 'Publish')}
+          {submitting ? (
+            <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span className="btn-spinner" /> Publishing...
+            </span>
+          ) : 'Publish'}
         </button>
       </div>
     </ModalWrapper>
