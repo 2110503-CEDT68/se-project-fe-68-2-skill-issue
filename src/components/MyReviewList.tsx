@@ -38,6 +38,7 @@ export default function MyReviewList() {
   const [displayReviews, setDisplayReviews] = useState<MyReviewDisplay[]>([]);
   const [localLoading, setLocalLoading] = useState(true);
   const [userInfo, setUserInfo] = useState({ id: '', name: '' });
+  const { toast, showToast } = useToast();
 
   const {
     fetchReviews,
@@ -48,10 +49,7 @@ export default function MyReviewList() {
     deleteTarget,
     setDeleteTarget,
     isSubmitting
-  } = useReviews();
-
-  const { toast } = useToast();
-
+  } = useReviews(showToast);
   useEffect(() => {
     try {
       const raw = localStorage.getItem('jf_user');

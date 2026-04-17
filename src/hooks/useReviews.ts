@@ -3,13 +3,11 @@ import getReviews   from '@/libs/getReviews';
 import createReview from '@/libs/createReview';
 import editReview   from '@/libs/editReview';
 import deleteReview  from '@/libs/deleteReview';
-import { useToast } from './useToast';
 import { ReviewItem } from '../../interface';
 
-export function useReviews() {
+export function useReviews(showToast: (msg: string, type: "success" | "error" | "info" | "") => void) {
   const [reviews, setReviews] = useState<ReviewItem[]>([]);
   const [loading, setLoading] = useState(false);
-  const { showToast } = useToast();
 
   // State สำหรับจัดการ Modal และสถานะการส่งข้อมูล
   const [editTarget, setEditTarget] = useState<ReviewItem | null>(null);

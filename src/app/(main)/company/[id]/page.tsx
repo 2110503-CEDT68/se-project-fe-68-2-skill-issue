@@ -19,10 +19,11 @@ import getCompany   from '@/libs/getCompany';
 import getBookings  from '@/libs/getBookings';
 import createBooking from '@/libs/createBooking';
 
-import { useReviews }  from '@/hooks/useReviews';
-import { useToast }    from '@/hooks/useToast';
-import { formatDate }  from '@/utils/dateFormat';
-import { CompanyItem, ReviewItem } from '../../../../../interface';
+import { useReviews }     from '@/hooks/useReviews';
+import { useBookCompany } from '@/hooks/useBookCompany';
+import { useToast }       from '@/hooks/useToast';
+import { formatDate }     from '@/utils/dateFormat';
+import { CompanyItem }    from '../../../../../interface';
 
 // ── Styles ───────────────────────────────────────────────────────────────────
 import '@/styles/companyProfile.css';
@@ -31,29 +32,23 @@ import '@/styles/modal.css';
 import '@/styles/bookingList.css';
 import '@/styles/card.css';
 
-export default function CompanyProfilePage({ isFull }: { isFull: boolean }) {
+export default function CompanyProfilePage() {
   const params    = useParams();
   const companyId = params.id as string;
 
   // ── Data state ────────────────────────────────────────────────────────────
   const [company, setCompany] = useState<CompanyItem | null>(null);
   const [loadingPage, setLoadingPage] = useState(true);
-
-  // ── Auth / user state ─────────────────────────────────────────────────────
   const [userInfo, setUserInfo] = useState({ id: '', name: '', role: '' });
-  const [userBookingDate, setUserBookingDate] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
-
-  // ── Book modal state ──────────────────────────────────────────────────────
-  const [showBookModal, setShowBookModal]   = useState(false);
-  const [bookDate, setBookDate]             = useState('2022-05-10');
-  const [bookTime, setBookTime]             = useState('09:00');
+  const [showBookModal, setShowBookModal] = useState(false);
   const [bookSubmitting, setBookSubmitting] = useState(false);
 
-  // ── ใช้ความสามารถจาก Custom Hook ──
+  // ── Hooks ──
+  const { toast, showToast } = useToast();
+  
   const {
     reviews,
-    setReviews,
     fetchReviews,
     handleCreate,
     handleUpdate,
@@ -62,13 +57,17 @@ export default function CompanyProfilePage({ isFull }: { isFull: boolean }) {
     setEditTarget,
     deleteTarget,
     setDeleteTarget,
-    isSubmitting
-  } = useReviews();
+    isSubmitting: reviewSubmitting
+  } = useReviews(showToast);
 
-  const { toast, showToast } = useToast();
+  const {
+    isFull,
+    loadData, // ใช้สำหรับรีเฟรชสถานะการจอง (isFull)
+    bookDate, setBookDate,
+    bookTime, setBookTime
+  } = useBookCompany();
 
   // ── Data loaders ──────────────────────────────────────────────────────────
-
   const loadCompany = useCallback(async () => {
     try {
       const res = await getCompany(companyId);
@@ -77,7 +76,6 @@ export default function CompanyProfilePage({ isFull }: { isFull: boolean }) {
   }, [companyId]);
 
   // ── Effects ───────────────────────────────────────────────────────────────
-
   useEffect(() => {
     try {
       const raw = localStorage.getItem('jf_user');
@@ -89,25 +87,16 @@ export default function CompanyProfilePage({ isFull }: { isFull: boolean }) {
   }, []);
 
   useEffect(() => {
-    if (!userInfo.id || !companyId) return;
-    const token = localStorage.getItem('jf_token') || '';
-    getBookings(token)
-      .then((res) => {
-        const booking = (res.data || []).find((b: any) => {
-          const cId = typeof b.company === 'object' ? b.company._id : b.company;
-          return cId === companyId;
-        });
-        if (booking) setUserBookingDate(formatDate(booking.bookingDate));
-      })
-      .catch(() => {});
-  }, [userInfo.id, companyId]);
-
-  useEffect(() => {
     setLoadingPage(true);
-    Promise.all([loadCompany(), fetchReviews(companyId)]).finally(() => setLoadingPage(false));
-  }, [loadCompany, fetchReviews, companyId]);
+    // โหลดข้อมูลบริษัท, รีวิว และสถานะการจองล่าสุดพร้อมกัน
+    Promise.all([
+      loadCompany(), 
+      fetchReviews(companyId), 
+      loadData()
+    ]).finally(() => setLoadingPage(false));
+  }, [loadCompany, fetchReviews, loadData, companyId]);
 
-  // หา Review ของตัวเองจากรายการทั้งหมด
+  // หา Review ของตัวเอง
   const userReview = reviews.find((r) => {
     const uid = typeof r.user === 'object' ? r.user._id : r.user;
     return uid === userInfo.id;
@@ -115,13 +104,23 @@ export default function CompanyProfilePage({ isFull }: { isFull: boolean }) {
 
   // ── Handlers ──────────────────────────────────────────────────────────────
 
-  async function onBookSubmit() {
+  // ฟังก์ชันจอง (ปรับปรุงให้เรียก loadData เพื่อรีเฟรช isFull)
+  async function handleBookSubmit() {
     if (!company) return;
     setBookSubmitting(true);
     try {
       const token = localStorage.getItem('jf_token') || '';
       const newDate = `${bookDate}T${bookTime}:00`;
+      
+      // 1. ยิง API สร้างการจอง
       await createBooking(token, companyId, newDate);
+      
+      // 2. 🔥 สำคัญ: สั่งให้ Hook โหลดข้อมูลใหม่เพื่ออัปเดตค่า isFull ในทันที
+      await loadData(); 
+      
+      // 3. รีเฟรชข้อมูลบริษัท (เผื่อมี counter หรือสถานะอื่นๆ)
+      await loadCompany();
+
       showToast('✅ Booking confirmed!', 'success');
       setShowBookModal(false);
     } catch (err: unknown) {
@@ -131,12 +130,16 @@ export default function CompanyProfilePage({ isFull }: { isFull: boolean }) {
     }
   }
 
-  // Admin delete logic (เสริมจาก Hook)
+  const handleOpenBookModal = async () => {
+    await loadData(); // เช็คสถานะล่าสุดก่อนเปิด Modal
+    setShowBookModal(true);
+  };
+
   const handleAdminDelete = async (reason: string) => {
     const success = await handleConfirmDelete();
     if (success) {
       showToast(`✅ Deleted by admin. Reason: ${reason}`, 'success');
-      await loadCompany(); // update counter
+      await loadCompany();
     }
   };
 
@@ -148,8 +151,6 @@ export default function CompanyProfilePage({ isFull }: { isFull: boolean }) {
     </div>
   );
 
-  const isDeletingOwn = (typeof deleteTarget?.user === 'object' ? deleteTarget.user._id : deleteTarget?.user) === userInfo.id;
-
   return (
     <div className="company-profile-page">
       <CompanyHeader
@@ -157,9 +158,9 @@ export default function CompanyProfilePage({ isFull }: { isFull: boolean }) {
         reviewCount={company.numReviews ?? reviews.length}
         currentUserId={userInfo.id}
         hasUserReview={!!userReview}
-        isFull={isFull}
+        isFull={isFull} // ค่านี้จะกลายเป็น true ทันทีหลังจบ loadData() ใน handleBookSubmit
         onOpenReviewModal={() => userReview ? setEditTarget(userReview) : setShowCreateModal(true)}
-        onOpenBookModal={() => setShowBookModal(true)}
+        onOpenBookModal={handleOpenBookModal}
       />
 
       <ReviewsFeed
@@ -175,13 +176,13 @@ export default function CompanyProfilePage({ isFull }: { isFull: boolean }) {
         <CreateReviewModal
           userName={userInfo.name}
           companyName={company.name}
-          submitting={isSubmitting}
+          submitting={reviewSubmitting}
           bookingDate={formatDate(new Date().toISOString())}
           onConfirm={async (rating, comment) => {
             const success = await handleCreate(companyId, rating, comment);
             if (success) {
               setShowCreateModal(false);
-              loadCompany(); // refresh header stats
+              loadCompany(); 
             }
           }}
           onClose={() => setShowCreateModal(false)}
@@ -194,21 +195,20 @@ export default function CompanyProfilePage({ isFull }: { isFull: boolean }) {
           userName={userInfo.name}
           bookingDate={formatDate(editTarget.effectiveDate)}
           existingReview={editTarget}
-          submitting={isSubmitting}
+          submitting={reviewSubmitting}
           onConfirm={async (rating, comment) => {
             await handleUpdate(rating, comment);
-            // hook จะจัดการ update reviews state ให้เอง
           }}
           onClose={() => setEditTarget(null)}
         />
       )}
 
+      {/* ── 3. Delete Modal ── */}
       {deleteTarget && (
         <>
-          {/* กรณีลบของตัวเอง (ไม่ว่าจะเป็น User หรือ Admin) */}
           {((typeof deleteTarget.user === 'object' ? deleteTarget.user._id : deleteTarget.user) === userInfo.id) ? (
             <DeleteReviewModal
-              loading={isSubmitting}
+              loading={reviewSubmitting}
               onConfirm={handleConfirmDelete}
               onClose={() => setDeleteTarget(null)}
             />
@@ -217,14 +217,15 @@ export default function CompanyProfilePage({ isFull }: { isFull: boolean }) {
               <DeleteReviewAdminModal
                 open={!!deleteTarget}
                 onClose={() => setDeleteTarget(null)}
-                onConfirm={handleAdminDelete} // ส่งเหตุผลการลบ
-                loading={isSubmitting}
+                onConfirm={handleAdminDelete}
+                loading={reviewSubmitting}
               />
             )
           )}
         </>
       )}
 
+      {/* ── 4. Book Modal ── */}
       {showBookModal && (
         <BookModal
           company={company}
@@ -234,7 +235,7 @@ export default function CompanyProfilePage({ isFull }: { isFull: boolean }) {
           submitting={bookSubmitting}
           onDateChange={setBookDate}
           onTimeChange={setBookTime}
-          onConfirm={onBookSubmit}
+          onConfirm={handleBookSubmit}
           onClose={() => setShowBookModal(false)}
         />
       )}
