@@ -21,7 +21,8 @@ interface PostCardProps {
 }
 
 export default function PostCard({ post, currentUserId, currentUserName, index, onDelete }: PostCardProps) {
-  const isOwner = currentUserId && currentUserId === post.author;
+  // เช็คชื่อเจ้าของโพสต์ (ใช้ Logic เดียวกับคอมเมนต์เพื่อความชัวร์)
+  const isOwner = currentUserId && (typeof post.author === 'object' ? post.author._id : post.author) === currentUserId;
   const displayName = typeof post.author === 'object' ? post.author.name : 'User';
 
   const [comments, setComments] = useState<BlogComment[]>([]);
@@ -34,21 +35,32 @@ export default function PostCard({ post, currentUserId, currentUserName, index, 
 
   async function handleSendComment() {
     const text = comment.trim();
-    if (!text || sending) return;
+    const token = localStorage.getItem('jf_token');
+    
+    if (!text || sending || !token) {
+      if (!token) console.error("No token found in localStorage");
+      return;
+    }
+
     setSending(true);
     try {
-      const token = localStorage.getItem('jf_token') || '';
       await createComment(token, post._id, text);
-      // optimistic update — add to local list immediately
-      setComments(prev => [...prev, {
+      
+      // ── Optimistic Update ──
+      // จำลองก้อนข้อมูลให้เหมือนที่ Backend ส่งมา (มี author เป็น object)
+      const newComment: any = {
         _id: Date.now().toString(),
         text,
-        author: currentUserId,
+        author: { _id: currentUserId, name: currentUserName }, 
         blog: post._id,
         createdAt: new Date().toISOString(),
-      }]);
+      };
+      
+      setComments(prev => [...prev, newComment]);
       setComment('');
-    } catch { /* ignore */ } finally {
+    } catch (err) {
+      console.error("Post failed:", err);
+    } finally {
       setSending(false);
     }
   }
@@ -80,15 +92,30 @@ export default function PostCard({ post, currentUserId, currentUserName, index, 
 
       <hr className="post-detail-divider" />
 
-      {/* Comment list */}
+      {/* Comment list - เพิ่มสไตล์เลื่อนได้ตรงนี้ */}
       {comments.length > 0 && (
-        <div className="post-comment-list">
-          {comments.map((c, i) => (
-            <div key={c._id} className="post-comment-item">
-              <p className="post-comment-author">comment {i + 1} : {c.author === currentUserId ? currentUserName : 'Anonymous'}</p>
-              <p className="post-comment-text">{c.text}</p>
-            </div>
-          ))}
+        <div className="post-comment-list" style={{ 
+          maxHeight: '150px', 
+          overflowY: 'auto', 
+          margin: '10px 0',
+          paddingRight: '5px'
+        }}>
+          {comments.map((c, i) => {
+            // ── Logic แสดงชื่อ ──
+            // เช็คว่า c.author เป็นก้อน Object ที่มี name ไหม (กรณี Populate มาจาก Backend)
+            const authorName = (typeof c.author === 'object' && c.author !== null)
+              ? (c.author as any).name 
+              : (c.author === currentUserId ? currentUserName : 'Anonymous');
+
+            return (
+              <div key={c._id} className="post-comment-item">
+                <p className="post-comment-author">
+                  comment {i + 1} : {authorName}
+                </p>
+                <p className="post-comment-text">{c.text}</p>
+              </div>
+            );
+          })}
         </div>
       )}
 
