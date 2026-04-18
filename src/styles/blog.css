@@ -52,7 +52,7 @@
 
 .post-card {
   background: var(--surface, #fff);
-  border: 1px solid var(--border, #e5e5e5);
+  border: 1.5px dashed #1A1714;
   border-radius: 14px;
   padding: 20px 24px;
   cursor: pointer;
@@ -69,19 +69,32 @@
   to   { opacity: 1; transform: translateY(0); }
 }
 
-.post-card-header {
+.post-card-meta-row {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   gap: 12px;
-  margin-bottom: 10px;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+
+.post-card-meta-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.post-card-date {
+  font-size: 0.78rem;
+  color: var(--muted, #888);
 }
 
 .post-card-title {
   font-size: 1.05rem;
   font-weight: 700;
   color: var(--text, #1a1a1a);
-  margin: 0;
+  margin: 0 0 8px;
   line-height: 1.4;
 }
 
@@ -102,12 +115,6 @@
   transition: background 0.15s;
 }
 .btn-post-delete:hover { background: #ffeaea; }
-
-.post-card-meta {
-  font-size: 0.78rem;
-  color: var(--muted, #888);
-  margin-bottom: 10px;
-}
 
 .post-card-preview {
   font-size: 0.875rem;
@@ -198,7 +205,61 @@
   line-height: 1.75;
   color: var(--text, #333);
   white-space: pre-wrap;
-  margin-bottom: 20px;
+  margin-bottom: 16px;
+}
+
+.post-detail-divider {
+  border: none;
+  border-top: 1px solid #e0e0e0;
+  margin: 0 0 16px;
+}
+
+/* ─── Comment List ────────────────────────────────── */
+.post-comment-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 220px;
+  overflow-y: auto;
+  margin-bottom: 12px;
+  padding-right: 6px;
+}
+.post-comment-list::-webkit-scrollbar {
+  width: 14px;
+}
+.post-comment-list::-webkit-scrollbar-button {
+  display: none;
+}
+.post-comment-list::-webkit-scrollbar-track {
+  background: transparent;
+  border-radius: 999px;
+  box-shadow: inset 0 0 0 1px #1A1714;
+}
+.post-comment-list::-webkit-scrollbar-thumb {
+  background: #E8530A;
+  border-radius: 999px;
+  border: 1px solid #1A1714;
+  background-clip: padding-box;
+}
+
+.post-comment-item {
+  border: 1.5px solid #1A1714;
+  border-radius: 12px;
+  padding: 10px 14px;
+}
+
+.post-comment-author {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text, #1a1a1a);
+  margin: 0 0 4px;
+}
+
+.post-comment-text {
+  font-size: 0.85rem;
+  color: var(--text, #444);
+  margin: 0;
+  line-height: 1.5;
 }
 
 /* ─── Comment Box ─────────────────────────────────── */
@@ -207,7 +268,7 @@
   align-items: center;
   gap: 0;
   border: 1.5px solid #1A1714;
-  border-radius: 10px;
+  border-radius: 999px;
   overflow: hidden;
   margin-top: 4px;
 }
@@ -216,7 +277,7 @@
   flex: 1;
   border: none;
   outline: none;
-  padding: 10px 14px;
+  padding: 10px 18px;
   font-size: 0.88rem;
   font-family: inherit;
   color: var(--text, #1a1a1a);
@@ -227,7 +288,7 @@
   background: none;
   border: none;
   border-left: 1.5px solid #1A1714;
-  padding: 8px 12px;
+  padding: 8px 14px;
   cursor: pointer;
   color: var(--text, #1a1a1a);
   display: flex;

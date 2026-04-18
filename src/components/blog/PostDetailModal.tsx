@@ -57,6 +57,8 @@ export default function PostDetailModal({ post, authorName, onClose }: PostDetai
       {/* Content */}
       <p className="post-detail-content">{post.content}</p>
 
+      <hr className="post-detail-divider" />
+
       {/* Comment input */}
       <div className="post-comment-box">
         <input

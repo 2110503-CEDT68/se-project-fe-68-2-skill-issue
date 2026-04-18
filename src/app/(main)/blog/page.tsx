@@ -6,7 +6,6 @@ import { BlogPost } from '../../../../interface';
 import getPosts from '@/libs/getPosts';
 import deletePost from '@/libs/deletePost';
 import PostCard from '@/components/blog/PostCard';
-import PostDetailModal from '@/components/blog/PostDetailModal';
 import DeletePostModal from '@/components/blog/DeletePostModal';
 import Toast from '@/components/Toast';
 import { useToast } from '@/hooks/useToast';
@@ -20,7 +19,6 @@ export default function BlogPage() {
   const [currentUserId, setCurrentUserId] = useState('');
   const [currentUserName, setCurrentUserName] = useState('');
 
-  const [detailTarget, setDetailTarget] = useState<BlogPost | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<BlogPost | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
 
@@ -98,21 +96,12 @@ export default function BlogPage() {
               key={post._id}
               post={post}
               currentUserId={currentUserId}
+              currentUserName={currentUserName}
               index={idx}
-              onClick={setDetailTarget}
               onDelete={setDeleteTarget}
             />
           ))}
         </div>
-      )}
-
-      {/* Modals */}
-      {detailTarget && (
-        <PostDetailModal
-          post={detailTarget}
-          authorName={currentUserName}
-          onClose={() => setDetailTarget(null)}
-        />
       )}
 
       {deleteTarget && (

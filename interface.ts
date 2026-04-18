@@ -137,6 +137,20 @@ export interface BlogPostJson {
   data: BlogPost[];
 }
 
+export interface BlogComment {
+  _id: string;
+  text: string;
+  author: string;
+  blog: string;
+  createdAt: string;
+}
+
+export interface BlogCommentJson {
+  success: boolean;
+  count?: number;
+  data: BlogComment[];
+}
+
 export interface BookModalProps {
   company:      CompanyItem;
   editMode:     boolean;
