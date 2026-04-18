@@ -201,7 +201,10 @@ export default function CompanyProfilePage() {
           existingReview={editTarget}
           submitting={reviewSubmitting}
           onConfirm={async (rating, comment) => {
-            await handleUpdate(rating, comment);
+            const success = await handleUpdate(rating, comment);
+             if (success) {
+              loadCompany(); 
+            }
           }}
           onClose={() => setEditTarget(null)}
         />
@@ -213,7 +216,14 @@ export default function CompanyProfilePage() {
           {((typeof deleteTarget.user === 'object' ? deleteTarget.user._id : deleteTarget.user) === userInfo.id) ? (
             <DeleteReviewModal
               loading={reviewSubmitting}
-              onConfirm={handleConfirmDelete}
+              onConfirm={
+                async () => {
+                const success = await handleConfirmDelete();
+                if (success) {
+                loadCompany(); 
+                }
+              }
+              }
               onClose={() => setDeleteTarget(null)}
             />
           ) : (
