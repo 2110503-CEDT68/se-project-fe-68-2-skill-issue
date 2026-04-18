@@ -99,6 +99,11 @@ export default function PostCard({ post, currentUserId, currentUserName, index, 
 
       <hr className="post-detail-divider" />
 
+      {/* Total comment count */}
+      <p className="post-comment-count" style={{ fontSize: '0.85rem', color: '#888', margin: '6px 0' }}>
+         {comments.length} {comments.length === 1 ? 'Comment' : 'Comments'}
+      </p>
+
       {/* Comment list - เพิ่มสไตล์เลื่อนได้ตรงนี้ */}
       {comments.length > 0 && (
         <div className="post-comment-list" style={{ 
