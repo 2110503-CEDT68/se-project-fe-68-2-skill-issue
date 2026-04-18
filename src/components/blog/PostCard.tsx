@@ -86,9 +86,6 @@ export default function PostCard({ post, currentUserId, currentUserName, index, 
           </span>
           <span className="post-card-date">{formatDate(post.createdAt)}</span>
         </div>
-        {isOwner && (
-          <button className="btn-post-delete" onClick={() => onDelete(post)}>Delete</button>
-        )}
       </div>
 
       {/* Title */}
