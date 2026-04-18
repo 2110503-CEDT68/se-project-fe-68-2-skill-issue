@@ -29,9 +29,16 @@ export default function PostCard({ post, currentUserId, currentUserName, index, 
   const [comment, setComment] = useState('');
   const [sending, setSending] = useState(false);
 
-  useEffect(() => {
-    getComments(post._id).then(res => setComments(res.data || []));
-  }, [post._id]);
+ useEffect(() => {
+  getComments(post._id).then(res => {
+    const rawComments = res.data || [];
+    // เรียงจากเก่าไปใหม่ (ASC)
+    const sorted = [...rawComments].sort((a, b) => 
+      new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+    );
+    setComments(sorted);
+  });
+}, [post._id]);
 
   async function handleSendComment() {
     const text = comment.trim();
