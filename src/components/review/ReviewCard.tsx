@@ -1,4 +1,4 @@
-import { ReviewItem } from '../../interface';
+import { ReviewItem } from '../../../interface';
 import StarDisplay from './StarDisplay';
 import { formatDate, getEffectiveDate } from '@/utils/dateFormat';
 

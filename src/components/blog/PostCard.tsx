@@ -22,7 +22,7 @@ interface PostCardProps {
 
 export default function PostCard({ post, currentUserId, currentUserName, index, onDelete }: PostCardProps) {
   const isOwner = currentUserId && currentUserId === post.author;
-  const displayName = isOwner ? currentUserName : 'Anonymous';
+  const displayName = typeof post.author === 'object' ? post.author.name : 'User';
 
   const [comments, setComments] = useState<BlogComment[]>([]);
   const [comment, setComment] = useState('');
