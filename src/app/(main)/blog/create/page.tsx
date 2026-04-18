@@ -119,12 +119,12 @@ export default function CreatePostPage() {
       <div className="create-post-agreement">
         <h4>Agreement and Policy</h4>
         <ol>
-          <li>Lorem ipsum dolor sit amet, consectetur adipiscing elit.</li>
-          <li>Nunc bibendum arcu in nisi ultrices mollis.</li>
-          <li>Etiam ac est sodales, rutrum odio ac, vulputate urna.</li>
-          <li>In eget tortor pharetra, porttitor nisi sed, blandit tellus.</li>
-          <li>Integer feugiat nunc id sagittis egestas.</li>
-          <li>Pellentesque sed lacus ac sapien vestibulum porttitor eget sit amet ligula</li>
+          <li>Be respectful and professional at all times.</li>
+          <li>Post only career-related and relevant content.</li>
+          <li>Ensure information is accurate and not misleading.</li>
+          <li>No spam or unauthorized advertising.</li>
+          <li>Respect copyrights and give proper credit.</li>
+          <li>Posts may be moderated or removed if they violate these rules.</li>
         </ol>
       </div>
     </div>
