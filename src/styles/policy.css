@@ -1,0 +1,129 @@
+/* ── Policy Page ── */
+.policy-page {
+  min-height: 100vh;
+  background: var(--bg);
+  padding: 40px 20px;
+  display: flex;
+  justify-content: center;
+}
+
+.policy-card {
+  width: 100%;
+  max-width: 720px;
+  animation: fadeUp .45s ease both;
+}
+
+.policy-title {
+  font-family: 'DM Serif Display', serif;
+  font-size: 2rem;
+  margin-bottom: 12px;
+}
+
+.policy-intro {
+  font-size: .92rem;
+  color: var(--muted);
+  line-height: 1.7;
+  margin-bottom: 20px;
+}
+
+.policy-divider {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 28px 0;
+}
+
+.policy-section {
+  margin-bottom: 28px;
+}
+
+.policy-section h2 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+
+.policy-section p,
+.policy-section li {
+  font-size: .88rem;
+  color: var(--text);
+  line-height: 1.75;
+}
+
+.policy-section ul,
+.policy-section ol {
+  padding-left: 20px;
+  margin: 8px 0;
+}
+
+.policy-section li {
+  margin-bottom: 8px;
+}
+
+.policy-note {
+  font-size: .82rem;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.policy-back {
+  margin-top: 32px;
+  text-align: center;
+}
+
+.policy-back .btn-policy-back {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 32px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: .92rem;
+  font-weight: 600;
+  color: #fff;
+  background: #C8502A;
+  border: none;
+  border-radius: 10px;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background .2s, transform .15s, box-shadow .2s;
+}
+
+.policy-back .btn-policy-back:hover {
+  background: #a8401e;
+  box-shadow: 0 4px 16px rgba(200, 80, 42, .3);
+  transform: translateY(-1px);
+}
+
+/* ── Consent Checkbox (Register Page) ── */
+.consent-field {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.consent-field input[type="checkbox"] {
+  margin-top: 3px;
+  width: 18px;
+  height: 18px;
+  accent-color: var(--accent);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.consent-field label {
+  font-size: .84rem;
+  color: var(--text);
+  line-height: 1.55;
+  cursor: pointer;
+}
+
+.consent-field a {
+  color: var(--accent);
+  font-weight: 500;
+  text-decoration: underline;
+}
+
+.consent-field a:hover {
+  opacity: .8;
+}

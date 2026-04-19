@@ -7,6 +7,7 @@ import userRegister from '@/libs/userRegister';
 import AuthLeftPanel from '@/components/AuthLeftPanel';
 import EyeIcon from '@/components/EyeIcon';
 import '@/styles/login.css';
+import '@/styles/policy.css';
 import getMe from '@/libs/getMe';
 
 function getStrength(pw: string): number {
@@ -25,6 +26,7 @@ export default function RegisterPage() {
   const [confirm, setConfirm] = useState('');
   const [showPw, setShowPw] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
+  const [consent, setConsent] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
   const router = useRouter();
@@ -49,6 +51,10 @@ export default function RegisterPage() {
     }
     if (!/^0\d{9}$/.test(phone)) {
       setError('Phone number must be 10 digits and start with 0 (e.g. 0812345678).');
+      return;
+    }
+    if (!consent) {
+      setError('You must agree to the Agreement and Policy before registering.');
       return;
     }
 
@@ -185,6 +191,21 @@ export default function RegisterPage() {
                       </button>
                     </div>
                   </div>
+                </div>
+
+                <div className="consent-field">
+                  <input
+                    type="checkbox"
+                    id="consent"
+                    checked={consent}
+                    onChange={(e) => setConsent(e.target.checked)}
+                  />
+                  <label htmlFor="consent">
+                    I agree to the{' '}
+                    <Link href="/policy" target="_blank" rel="noopener noreferrer">
+                      Agreement and Policy
+                    </Link>
+                  </label>
                 </div>
 
                 <button type="submit" className="btn-auth">
