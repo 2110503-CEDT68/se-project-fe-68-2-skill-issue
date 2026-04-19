@@ -95,6 +95,19 @@ async function loginAs(page: Page, user: typeof USER | typeof ADMIN) {
  * Reviews list is configurable; company object is fixed.
  */
 async function mockCompanyPage(page: Page, reviews: object[] = [MY_REVIEW]) {
+  // GET /api/v1/companies  (all companies — needed by useBookCompany hook)
+  await page.route('**/api/v1/companies', (route) => {
+    if (route.request().method() === 'GET') {
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ success: true, data: [COMPANY] }),
+      });
+    } else {
+      route.continue();
+    }
+  });
+
   // GET /api/v1/companies/:id  (protected route — needs token)
   await page.route(`**/companies/${COMPANY_ID}`, (route) => {
     if (route.request().method() === 'GET') {
@@ -465,6 +478,7 @@ test.describe('US1-2 — View Reviews', () => {
    *      Then review list is displayed AND average rating score is shown.
    */
   test('AC1 — Reviews list and average rating are displayed', async ({ page }) => {
+    await loginAs(page, USER);
     await mockCompanyPage(page, [REVIEW_OTHER, MY_REVIEW]);
     await goToCompanyPage(page);
 
@@ -484,6 +498,7 @@ test.describe('US1-2 — View Reviews', () => {
    *      Then "No Reviews Yet" and "Be the first one to leave a review" placeholders shown.
    */
   test('AC2 — Empty reviews shows no-reviews placeholder', async ({ page }) => {
+    await loginAs(page, USER);
     await mockCompanyPage(page, []);
     await goToCompanyPage(page);
 
