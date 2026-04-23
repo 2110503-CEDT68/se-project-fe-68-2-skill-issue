@@ -83,12 +83,21 @@ export default function PostCard({ post, currentUserId, currentUserName, index, 
       {/* Comment list */}
       {comments.length > 0 && (
         <div className="post-comment-list">
-          {comments.map((c, i) => (
-            <div key={c._id} className="post-comment-item">
-              <p className="post-comment-author">comment {i + 1} : {c.author === currentUserId ? currentUserName : 'Anonymous'}</p>
-              <p className="post-comment-text">{c.text}</p>
-            </div>
-          ))}
+          <p className="post-comment-total">Total Comments: {comments.length}</p>
+          {[...comments].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).map((c) => {
+            const authorName = (typeof c.author === 'object' && c.author !== null)
+              ? (c.author as { name?: string }).name || 'Anonymous'
+              : (c.author === currentUserId ? currentUserName : 'Anonymous');
+            const isMe = (typeof c.author === 'object' && c.author !== null)
+              ? (c.author as { _id?: string })._id === currentUserId
+              : c.author === currentUserId;
+            return (
+              <div key={c._id} className="post-comment-item">
+                <p className="post-comment-author">{authorName}{isMe && <span className="post-comment-you"> (You)</span>}</p>
+                <p className="post-comment-text">{c.text}</p>
+              </div>
+            );
+          })}
         </div>
       )}
 

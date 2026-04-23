@@ -242,6 +242,19 @@
   background-clip: padding-box;
 }
 
+.post-comment-total {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--accent, #E8A020);
+  background: #fff;
+  margin: 0 0 6px;
+  padding-bottom: 4px;
+  border-bottom: 1.5px solid var(--accent, #E8A020);
+}
+
 .post-comment-item {
   border: 1.5px solid #1A1714;
   border-radius: 12px;
@@ -249,15 +262,23 @@
 }
 
 .post-comment-author {
-  font-size: 0.85rem;
+  font-size: 0.78rem;
   font-weight: 700;
-  color: var(--text, #1a1a1a);
+  color: #555;
   margin: 0 0 4px;
+  text-transform: none;
+}
+
+.post-comment-you {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #888;
 }
 
 .post-comment-text {
-  font-size: 0.85rem;
-  color: var(--text, #444);
+  font-size: 0.9rem;
+  font-weight: 400;
+  color: var(--text, #1a1a1a);
   margin: 0;
   line-height: 1.5;
 }
