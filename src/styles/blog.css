@@ -277,6 +277,10 @@
 
 .post-comment-text {
   font-size: 0.9rem;
+  word-wrap: break-word; 
+  overflow-wrap: break-word;
+  word-break: break-word;
+  max-width: 100%;
   font-weight: 400;
   color: var(--text, #1a1a1a);
   margin: 0;
