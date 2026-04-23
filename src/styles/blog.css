@@ -446,7 +446,7 @@
   letter-spacing: 0.04em;
 }
 
-/* Pagination */
+/* ─── Pagination ─────────────────────────────────── */
 .pagination {
   display: flex;
   align-items: center;
@@ -459,33 +459,100 @@
   min-width: 36px;
   height: 36px;
   padding: 0 10px;
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
+  border: 1.5px solid #1A1714;
+  border-radius: 999px;
   background: #fff;
-  color: #374151;
-  font-size: 0.9rem;
+  color: #1A1714;
+  font-size: 0.88rem;
+  font-family: inherit;
   cursor: pointer;
   transition: background 0.15s, color 0.15s, border-color 0.15s;
 }
 
 .pagination-btn:hover:not(:disabled) {
-  background: #f3f4f6;
-  border-color: #9ca3af;
+  background: rgba(232, 83, 10, 0.08);
+  border-color: #E8530A;
+  color: #E8530A;
 }
 
 .pagination-btn.active {
-  background: #2563eb;
+  background: #E8530A;
   color: #fff;
-  border-color: #2563eb;
+  border-color: #E8530A;
   font-weight: 600;
 }
 
 .pagination-btn:disabled {
-  opacity: 0.4;
+  opacity: 0.35;
   cursor: not-allowed;
 }
 
 .pagination-ellipsis {
-  color: #9ca3af;
-  padding: 0 4px;
+  color: #aaa;
+  padding: 0 2px;
+}
+
+/* ─── Search Bar ─────────────────────────────────── */
+.blog-search-wrapper {
+  position: relative;
+  max-width: 480px;
+  margin: 0 auto 28px;
+}
+
+.blog-search-wrapper::before {
+  content: '🔍';
+  position: absolute;
+  left: 18px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 0.85rem;
+  pointer-events: none;
+  opacity: 0.5;
+}
+
+.blog-search {
+  width: 100%;
+  padding: 11px 42px 11px 44px;
+  border: 1.5px solid #1A1714;
+  border-radius: 999px;
+  font-size: 0.88rem;
+  font-family: inherit;
+  color: var(--text, #1a1a1a);
+  background: var(--surface, #fff);
+  box-sizing: border-box;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.blog-search:focus {
+  border-color: #E8530A;
+  box-shadow: 0 0 0 3px rgba(232, 83, 10, 0.12);
+}
+
+.blog-search::placeholder {
+  color: #aaa;
+}
+
+.blog-search-clear {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: #1A1714;
+  border: none;
+  color: #fff;
+  font-size: 0.7rem;
+  width: 20px;
+  height: 20px;
+  border-radius: 999px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s;
+  line-height: 1;
+}
+
+.blog-search-clear:hover {
+  background: #E8530A;
 }
