@@ -38,20 +38,28 @@ export function useReviews(showToast: (msg: string, type: "success" | "error" | 
 
       const newReview = await createReview(token, companyId, rating, comment);
       
-      // อัปเดต State โดยการเพิ่มรีวิวใหม่ไว้ด้านหน้าสุด
-      setReviews((prev) => [newReview, ...prev]);
+      // inject user object เข้าไปแทน ID string
+      const raw = localStorage.getItem('jf_user');
+      const u = raw ? JSON.parse(raw) : null;
+      
+      const reviewWithUser = {
+        ...newReview,
+        user: u ? { _id: u._id, name: u.name } : newReview.user,
+      };
+      
+      setReviews((prev) => [reviewWithUser, ...prev]);
       
       showToast('✅ Review posted successfully!', 'success');
       return true;
     } catch (err: unknown) {
-      showToast(`❌ ${err instanceof Error ? err.message : 'Post failed'}`, 'error');
+      showToast(` ${err instanceof Error ? err.message : 'Post failed'}`, 'error');
       return false;
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  /** 3. แก้ไขรีวิว (Update) - ใช้ร่วมกับ editReview ที่คุณให้มา */
+  /** 3. แก้ไขรีวิว (Update) - ใช้ร่วมกับ editReview */
   const handleUpdate = async (rating: number, comment: string) => {
     if (!editTarget) return;
     setIsSubmitting(true);
@@ -61,16 +69,22 @@ export function useReviews(showToast: (msg: string, type: "success" | "error" | 
 
       const res = await editReview(token, editTarget._id, rating, comment);
       
-      // ตรวจสอบว่า API คืนค่าเป็น object ตัวเดียวหรือ array 
-      // หากเป็นโครงสร้าง ReviewJson ทั่วไปมักอยู่ที่ res.data
       const updatedReview = Array.isArray(res.data) ? res.data[0] : res.data;
 
+      const raw = localStorage.getItem('jf_user');
+      const u = raw ? JSON.parse(raw) : null;
+
+      const reviewWithUser = {
+        ...updatedReview,
+        user: u ? { _id: u._id, name: u.name } : updatedReview.user,
+      };
+
       setReviews((prev) =>
-        prev.map((r) => (r._id === editTarget._id ? updatedReview : r))
+        prev.map((r) => (r._id === editTarget._id ? reviewWithUser : r))
       );
       
       showToast('✅ Review updated!', 'success');
-      setEditTarget(null); // ปิด Modal แก้ไข
+      setEditTarget(null);
       return true;
     } catch (err: unknown) {
       showToast(`❌ ${err instanceof Error ? err.message : 'Update failed'}`, 'error');
@@ -79,7 +93,7 @@ export function useReviews(showToast: (msg: string, type: "success" | "error" | 
       setIsSubmitting(false);
     }
   };
-
+  
   /** 4. ลบรีวิว (Delete) */
   const handleConfirmDelete = async () => {
     if (!deleteTarget) return;

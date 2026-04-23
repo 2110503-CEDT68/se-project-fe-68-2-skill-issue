@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 
 // ── Components ───────────────────────────────────────────────────────────────
 import CompanyHeader          from '@/components/CompanyHeader';
@@ -32,8 +32,11 @@ import '@/styles/modal.css';
 import '@/styles/bookingList.css';
 import '@/styles/card.css';
 
+
+
 export default function CompanyProfilePage() {
   const params    = useParams();
+  const router = useRouter();
   const companyId = params.id as string;
 
   // ── Data state ────────────────────────────────────────────────────────────
@@ -187,6 +190,7 @@ export default function CompanyProfilePage() {
             if (success) {
               setShowCreateModal(false);
               loadCompany(); 
+              
             }
           }}
           onClose={() => setShowCreateModal(false)}
@@ -203,7 +207,9 @@ export default function CompanyProfilePage() {
           onConfirm={async (rating, comment) => {
             const success = await handleUpdate(rating, comment);
              if (success) {
-              loadCompany(); 
+              
+              loadCompany();
+
             }
           }}
           onClose={() => setEditTarget(null)}
