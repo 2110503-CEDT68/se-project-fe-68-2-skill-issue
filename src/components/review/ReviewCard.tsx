@@ -45,7 +45,7 @@ export default function ReviewCard({
   onEdit,
   onDelete,
 }: ReviewCardProps) {
-  const userName = typeof review.user === 'object' ? review.user.name : 'User';
+  const userName = typeof review.user === 'object' ? review.user.name : review.user;
   const isOwner =
     typeof review.user === 'object'
       ? review.user._id === currentUserId
