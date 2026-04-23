@@ -104,9 +104,12 @@ export default function PostCard({ post, currentUserId, currentUserName, index, 
             const authorName = (typeof c.author === 'object' && c.author !== null)
               ? (c.author as { name?: string }).name || 'Anonymous'
               : (c.author === currentUserId ? currentUserName : 'Anonymous');
+            const isMe = (typeof c.author === 'object' && c.author !== null)
+              ? (c.author as { _id?: string })._id === currentUserId
+              : c.author === currentUserId;
             return (
               <div key={c._id} className="post-comment-item">
-                <p className="post-comment-author">{authorName}</p>
+                <p className="post-comment-author">{authorName}{isMe && <span className="post-comment-you"> (You)</span>}</p>
                 <p className="post-comment-text">{c.text}</p>
               </div>
             );
