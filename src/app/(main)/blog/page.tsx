@@ -12,7 +12,6 @@ import EditCommentModal from '@/components/modals/EditCommentModal';
 import Pagination from '@/components/blog/Pagination';
 import Toast from '@/components/Toast';
 import { useToast } from '@/hooks/useToast';
-import { updateComment, deleteComment } from '@/libs/commentApi';
 import '@/styles/blog.css';
 
 const POSTS_PER_PAGE = 6;
@@ -37,10 +36,6 @@ export default function BlogPage() {
   const [deleteLoading, setDeleteLoading] = useState(false);
 
   // States สำหรับ Comment Modals
-  const [editCommentTarget, setEditCommentTarget] = useState<BlogComment | null>(null);
-  const [deleteCommentTarget, setDeleteCommentTarget] = useState<BlogComment | null>(null);
-  const [commentActionLoading, setCommentActionLoading] = useState(false);
-
   const { toast, showToast } = useToast();
 
   useEffect(() => {
@@ -105,39 +100,6 @@ export default function BlogPage() {
     }
   }
 
-  // --- Handlers สำหรับ Comment ---
-  async function handleConfirmEditComment(newText: string) {
-    if (!editCommentTarget) return;
-    setCommentActionLoading(true);
-    try {
-      const token = localStorage.getItem('jf_token') || '';
-      await updateComment(token, editCommentTarget._id, newText);
-      showToast('✅ Comment updated!', 'success');
-      setEditCommentTarget(null);
-      loadPosts(currentPage, searchQuery); // Reload ข้อมูลใหม่
-    } catch {
-      showToast('❌ Failed to update comment', 'error');
-    } finally {
-      setCommentActionLoading(false);
-    }
-  }
-
-  async function handleConfirmDeleteComment() {
-    if (!deleteCommentTarget) return;
-    setCommentActionLoading(true);
-    try {
-      const token = localStorage.getItem('jf_token') || '';
-      await deleteComment(token, deleteCommentTarget._id);
-      showToast('✅ Comment deleted.', 'success');
-      setDeleteCommentTarget(null);
-      loadPosts(currentPage, searchQuery);
-    } catch {
-      showToast('❌ Failed to delete comment', 'error');
-    } finally {
-      setCommentActionLoading(false);
-    }
-  }
-
   return (
     <div className="blog-page">
       <div className="blog-header">
@@ -179,7 +141,18 @@ export default function BlogPage() {
         </div>
       ) : posts.length === 0 ? (
         <div className="blog-empty">
-          {searchQuery ? `No results for "${searchQuery}"` : 'No posts yet.'}
+          {searchQuery ? (<div className="blog-empty">
+            <p>{searchQuery ? `No results for "${searchQuery}"` : 'No posts yet.'}</p>
+            {searchQuery && (
+              <button 
+                onClick={() => { setSearchInput(''); setSearchQuery(''); setCurrentPage(1); }}
+                style={{ color: '#B85C00', textDecoration: 'underline', background: 'none', border: 'none', cursor: 'pointer' }}
+              >
+                Clear all filters
+              </button>
+            )}
+          </div>
+        ) : ('No posts yet.')}
         </div>
       ) : (
         <div className="post-list">
@@ -192,8 +165,7 @@ export default function BlogPage() {
               currentUserRole={currentUserRole}
               index={idx}
               onDelete={setDeleteTarget}
-              onEditComment={setEditCommentTarget} 
-              onDeleteComment={setDeleteCommentTarget}
+              onShowToast={showToast}
             />
           ))}
         </div>
@@ -215,24 +187,6 @@ export default function BlogPage() {
           onClose={() => setDeleteTarget(null)}
         />
       )}
-
-      {editCommentTarget && (
-        <EditCommentModal
-          initialText={editCommentTarget.text}
-          loading={commentActionLoading}
-          onClose={() => setEditCommentTarget(null)}
-          onConfirm={handleConfirmEditComment}
-        />
-      )}
-
-      {deleteCommentTarget && (
-        <DeleteCommentModal
-          loading={commentActionLoading}
-          onConfirm={handleConfirmDeleteComment}
-          onClose={() => setDeleteCommentTarget(null)}
-        />
-      )}
-
       <Toast toast={toast} />
     </div>
   );

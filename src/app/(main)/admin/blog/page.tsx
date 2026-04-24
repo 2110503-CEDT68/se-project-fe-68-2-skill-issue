@@ -2,18 +2,19 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
-import { BlogPost } from '../../../../../interface';
+import { BlogPost, BlogComment } from '../../../../../interface';
 import getPosts from '@/libs/getPosts';
 import deletePost from '@/libs/deletePost';
-import Toast from '@/components/Toast';
-import { useToast } from '@/hooks/useToast';
-import SearchBar from '@/components/SearchBar';
-import EmptyState from '@/components/EmptyState';
-import ConfirmModal from '@/components/modals/ConfirmModal';
+import PostCard from '@/components/blog/PostCard';
+import DeleteCommentModal from '@/components/modals/DeleteCommentModal';
+import EditCommentModal from '@/components/modals/EditCommentModal';
 import Pagination from '@/components/blog/Pagination';
-import '@/styles/admin.css';
+import Toast from '@/components/ui/Toast';
+import { useToast } from '@/hooks/useToast';
+import { updateComment, deleteComment } from '@/libs/commentApi';
+import '@/styles/blog.css';
 
-const POSTS_PER_PAGE = 10;
+const POSTS_PER_PAGE = 6;
 
 export default function AdminBlogsPage() {
   const [posts, setPosts] = useState<BlogPost[]>([]);
@@ -21,18 +22,35 @@ export default function AdminBlogsPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
 
-  const [search, setSearch] = useState('');
+  const [searchInput, setSearchInput] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const [deleteTarget, setDeleteTarget] = useState<BlogPost | null>(null);
-  const [deleteSubmitting, setDeleteSubmitting] = useState(false);
+  const [currentUserId, setCurrentUserId] = useState('');
+  const [currentUserName, setCurrentUserName] = useState('');
+
+  // Comment modals only — post delete is handled inside PostCard (admin flow)
+  const [editCommentTarget, setEditCommentTarget] = useState<BlogComment | null>(null);
+  const [deleteCommentTarget, setDeleteCommentTarget] = useState<BlogComment | null>(null);
+  const [commentActionLoading, setCommentActionLoading] = useState(false);
+
   const { toast, showToast } = useToast();
 
-  const loadPosts = useCallback(async (page: number, q: string) => {
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem('jf_user');
+      if (raw) {
+        const u = JSON.parse(raw);
+        setCurrentUserId(u._id || '');
+        setCurrentUserName(u.name || '');
+      }
+    } catch { /* ignore */ }
+  }, []);
+
+  const loadPosts = useCallback(async (page: number, search: string) => {
     setLoading(true);
     try {
-      const res = await getPosts(page, POSTS_PER_PAGE, q);
+      const res = await getPosts(page, POSTS_PER_PAGE, search);
       setPosts(res.data || []);
       setTotalPages(res.pagination?.totalPages ?? 0);
       setCurrentPage(res.pagination?.page ?? page);
@@ -47,8 +65,9 @@ export default function AdminBlogsPage() {
     loadPosts(currentPage, searchQuery);
   }, [loadPosts, currentPage, searchQuery]);
 
-  function handleSearchChange(value: string) {
-    setSearch(value);
+  function handleSearchChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const value = e.target.value;
+    setSearchInput(value);
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => {
       setCurrentPage(1);
@@ -56,16 +75,17 @@ export default function AdminBlogsPage() {
     }, 400);
   }
 
-  async function handleDeleteConfirm() {
-    if (!deleteTarget) return;
-    setDeleteSubmitting(true);
+  function handlePageChange(page: number) {
+    setCurrentPage(page);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  // Called by PostCard after admin confirms policy reason — delete immediately
+  async function handleDeletePost(post: BlogPost) {
     try {
       const token = localStorage.getItem('jf_token') || '';
-      await deletePost(token, deleteTarget._id);
-
-      showToast('✅ Post deleted successfully.', 'success');
-      setDeleteTarget(null);
-
+      await deletePost(token, post._id);
+      showToast('✅ Post removed successfully.', 'success');
       const isLastOnPage = posts.length === 1 && currentPage > 1;
       if (isLastOnPage) {
         setCurrentPage((p) => p - 1);
@@ -73,120 +93,124 @@ export default function AdminBlogsPage() {
         loadPosts(currentPage, searchQuery);
       }
     } catch (err: unknown) {
-      showToast(
-        `❌ ${err instanceof Error ? err.message : 'Failed to delete'}`,
-        'error'
-      );
-    } finally {
-      setDeleteSubmitting(false);
+      showToast(`❌ ${err instanceof Error ? err.message : 'Failed to delete'}`, 'error');
     }
   }
 
-  function formatDate(iso: string) {
-    return new Date(iso).toLocaleString('en-US', {
-      year: 'numeric', month: 'short', day: 'numeric',
-      hour: '2-digit', minute: '2-digit',
-    });
+  async function handleConfirmEditComment(newText: string) {
+    if (!editCommentTarget) return;
+    setCommentActionLoading(true);
+    try {
+      const token = localStorage.getItem('jf_token') || '';
+      await updateComment(token, editCommentTarget._id, newText);
+      showToast('✅ Comment updated!', 'success');
+      setEditCommentTarget(null);
+      loadPosts(currentPage, searchQuery);
+    } catch {
+      showToast('❌ Failed to update comment', 'error');
+    } finally {
+      setCommentActionLoading(false);
+    }
+  }
+
+  async function handleConfirmDeleteComment() {
+    if (!deleteCommentTarget) return;
+    setCommentActionLoading(true);
+    try {
+      const token = localStorage.getItem('jf_token') || '';
+      await deleteComment(token, deleteCommentTarget._id);
+      showToast('✅ Comment deleted.', 'success');
+      setDeleteCommentTarget(null);
+      loadPosts(currentPage, searchQuery);
+    } catch {
+      showToast('❌ Failed to delete comment', 'error');
+    } finally {
+      setCommentActionLoading(false);
+    }
   }
 
   return (
-    <div className="container">
-      <div className="admin-header">
-        <div>
-          <h1 className="admin-title">Blogs Monitor</h1>
-          <p className="admin-sub">Review and moderate community blog posts</p>
+    <div className="blog-page">
+      <div className="blog-header">
+        <div className="blog-header-text">
+          <h1>Blogs Monitor</h1>
+          <p>Review and moderate community blog posts</p>
         </div>
-        <div className="admin-nav-links">
+        {/* <div className="admin-nav-links">
           <Link href="/admin/dashboard" className="btn-primary">Bookings</Link>
           <Link href="/admin/companies" className="btn-primary">Companies</Link>
-        </div>
+        </div> */}
       </div>
 
-      <div className="stats-row" style={{ gridTemplateColumns: 'repeat(2, 1fr)' }}>
-        <div className="stat-card">
-          <div className="stat-label">Total Posts</div>
-          <div className="stat-value">{posts.length}</div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-label">Total Pages</div>
-          <div className="stat-value accent">{totalPages}</div>
-        </div>
+      <div className="blog-search-wrapper">
+        <input
+          className="blog-search"
+          type="text"
+          placeholder="Search by title or content…"
+          value={searchInput}
+          onChange={handleSearchChange}
+        />
+        {searchInput && (
+          <button
+            className="blog-search-clear"
+            onClick={() => { setSearchInput(''); setCurrentPage(1); setSearchQuery(''); }}
+          >
+            ✕
+          </button>
+        )}
       </div>
-
-      <div className="section-header">
-        <h2 className="section-title">All Blog Posts</h2>
-      </div>
-      <SearchBar value={search} onChange={handleSearchChange} placeholder="Search by title or content…" />
 
       {loading ? (
-        <div className="admin-table-skeleton">
-          {[...Array(5)].map((_, i) => (
-            <div key={i} className="sk-row"><div className="sk-line sk-wide" /></div>
+        <div className="post-list">
+          {Array.from({ length: POSTS_PER_PAGE }).map((_, i) => (
+            <div key={i} className="post-skeleton" style={{ animationDelay: `${i * 0.1}s` }} />
           ))}
         </div>
       ) : posts.length === 0 ? (
-        <EmptyState
-          icon="📝"
-          title={search ? 'No matching posts' : 'No posts yet'}
-          message={search ? 'Try a different search term' : 'Blog posts will appear here once users start posting'}
-        />
+        <div className="blog-empty">
+          {searchQuery ? `No results for "${searchQuery}"` : 'No posts yet.'}
+        </div>
       ) : (
-        <div className="admin-table-wrap">
-          <table className="admin-table">
-            <thead>
-              <tr>
-                <th>#</th><th>Title</th><th>Author</th><th>Posted</th><th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {posts.map((post, i) => {
-                const authorName = typeof post.author === 'object' ? post.author.name : 'Unknown';
-                return (
-                  <tr key={post._id}>
-                    <td className="td-num">{(currentPage - 1) * POSTS_PER_PAGE + i + 1}</td>
-                    <td>
-                      <div className="td-user-name" style={{ maxWidth: 320, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                        {post.title}
-                      </div>
-                      <div className="td-user-email" style={{ maxWidth: 320, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                        {post.content}
-                      </div>
-                    </td>
-                    <td className="td-company">{authorName}</td>
-                    <td className="td-date">{formatDate(post.createdAt)}</td>
-                    <td>
-                      <div className="td-actions">
-                        <button className="btn-admin-delete" onClick={() => setDeleteTarget(post)}>Delete</button>
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+        <div className="post-list">
+          {posts.map((post, idx) => (
+            <PostCard
+              key={post._id}
+              post={post}
+              currentUserId={currentUserId}
+              currentUserName={currentUserName}
+              currentUserRole="admin"
+              index={idx}
+              onDelete={handleDeletePost}
+              onShowToast={showToast}
+            />
+          ))}
         </div>
       )}
 
       {!loading && totalPages > 1 && (
-        <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={(page) => setCurrentPage(page)} />
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={handlePageChange}
+        />
       )}
 
-      <ConfirmModal
-        open={!!deleteTarget}
-        title="Delete Blog Post?"
-        message={
-          <>
-            Remove <strong>&quot;{deleteTarget?.title}&quot;</strong>?
-            <br />
-            <span style={{ fontSize: '.8rem', color: 'var(--muted)' }}>This action cannot be undone.</span>
-          </>
-        }
-        confirmText="Delete"
-        loadingText="Deleting…"
-        loading={deleteSubmitting}
-        onConfirm={handleDeleteConfirm}
-        onClose={() => setDeleteTarget(null)}
-      />
+      {editCommentTarget && (
+        <EditCommentModal
+          initialText={editCommentTarget.text}
+          loading={commentActionLoading}
+          onClose={() => setEditCommentTarget(null)}
+          onConfirm={handleConfirmEditComment}
+        />
+      )}
+
+      {deleteCommentTarget && (
+        <DeleteCommentModal
+          loading={commentActionLoading}
+          onConfirm={handleConfirmDeleteComment}
+          onClose={() => setDeleteCommentTarget(null)}
+        />
+      )}
 
       <Toast toast={toast} />
     </div>

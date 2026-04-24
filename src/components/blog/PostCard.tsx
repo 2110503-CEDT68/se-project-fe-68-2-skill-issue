@@ -5,8 +5,11 @@ import Link from 'next/link';
 import { BlogPost, BlogComment } from '../../../interface';
 import createComment from '@/libs/createComment';
 import getComments from '@/libs/getComments';
-import deleteComment from '@/libs/deleteComment';
+import { updateComment, deleteComment } from '@/libs/commentApi';
+import EditCommentModal from '@/components/modals/EditCommentModal';
+import DeleteCommentModal from '@/components/modals/DeleteCommentModal';
 import DeleteCommentAdminModal from '@/components/modals/blog/DeleteCommentAdminModal';
+import DeletePostAdminModal from '@/components/blog/DeletePostAdminModal';
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleString('en-US', {
@@ -22,13 +25,12 @@ interface PostCardProps {
   currentUserRole?: string;
   index: number;
   onDelete: (post: BlogPost) => void;
-  onEditComment: (comment: BlogComment) => void;
-  onDeleteComment: (comment: BlogComment) => void;
+  onShowToast: (msg: string, type: 'success' | 'error') => void;
 }
 
 export default function PostCard({
   post, currentUserId, currentUserName, currentUserRole, index,
-  onDelete, onEditComment, onDeleteComment,
+  onDelete,onShowToast,
 }: PostCardProps) {
   const isAdmin = currentUserRole === 'admin';
   const isOwner = !!currentUserId && (typeof post.author === 'object' ? post.author._id : post.author) === currentUserId;
@@ -37,8 +39,17 @@ export default function PostCard({
   const [comments, setComments] = useState<BlogComment[]>([]);
   const [comment, setComment] = useState('');
   const [sending, setSending] = useState(false);
+  const [editTarget, setEditTarget] = useState<BlogComment | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<BlogComment | null>(null);
+  const [actionLoading, setActionLoading] = useState(false);
+
+  // Admin delete comment
   const [deleteCommentTarget, setDeleteCommentTarget] = useState<BlogComment | null>(null);
   const [deletingComment, setDeletingComment] = useState(false);
+  
+
+  // Admin delete post — modal เปิดตรงนี้ กด confirm ครั้งเดียว
+  const [showDeletePostModal, setShowDeletePostModal] = useState(false);
 
   useEffect(() => {
     getComments(post._id).then(res => {
@@ -50,6 +61,14 @@ export default function PostCard({
     });
   }, [post._id]);
 
+  const refreshComments = async () => {
+    const res = await getComments(post._id);
+    const sorted = (res.data || []).sort((a: any, b: any) => 
+      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
+    setComments(sorted);
+  };
+
   async function handleSendComment() {
     const text = comment.trim();
     const token = localStorage.getItem('jf_token');
@@ -60,56 +79,121 @@ export default function PostCard({
       const res = await getComments(post._id);
       setComments(res.data || []);
       setComment('');
+      onShowToast('✅ Comment posted!', 'success');
     } catch (err) {
+      onShowToast('❌ Failed to post comment', 'error');
       console.error(err);
     } finally {
       setSending(false);
     }
   }
 
+  async function handleConfirmEdit(newText: string) {
+  if (!editTarget) return;
+    const token = localStorage.getItem('jf_token') || '';
+    setActionLoading(true);
+    try {
+      await updateComment(token, editTarget._id, newText);
+      await refreshComments();
+      setEditTarget(null);
+      onShowToast('✅ Comment updated!', 'success');
+    } catch (err) { 
+      console.error(err); 
+      onShowToast('❌ Failed to update comment', 'error');
+    } 
+    finally { setActionLoading(false); }
+  }
+
+  async function handleConfirmDelete() {
+    if (!deleteTarget) return;
+    const token = localStorage.getItem('jf_token') || '';
+    setActionLoading(true);
+    try {
+      await deleteComment(token, deleteTarget._id);
+      setComments(prev => prev.filter(c => c._id !== deleteTarget._id));
+      setDeleteTarget(null);
+      onShowToast('✅ Comment deleted!', 'success');
+    } catch (err) {
+      console.error(err);
+      onShowToast('❌ Failed to delete comment', 'error');
+    } 
+    finally { setActionLoading(false); }
+  }
   async function handleAdminDeleteComment(reason: string) {
     if (!deleteCommentTarget) return;
     const token = localStorage.getItem('jf_token');
     if (!token) return;
     setDeletingComment(true);
     try {
-      await deleteComment(token, post._id, deleteCommentTarget._id);
+      await deleteComment(token, deleteCommentTarget._id);
       setComments(prev => prev.filter(c => c._id !== deleteCommentTarget._id));
+      onShowToast('✅ Admin removed comment', 'success');
       setDeleteCommentTarget(null);
     } catch (err) {
+      onShowToast('❌ Admin delete failed', 'error');
       console.error('Delete comment failed:', err);
     } finally {
       setDeletingComment(false);
     }
   }
 
+  // Admin กด confirm policy → ปิด modal → แจ้ง parent ลบ (ไม่ต้องกดอีกรอบ)
+  function handleAdminDeletePostConfirm(_reason: string) {
+    setShowDeletePostModal(false);
+    onDelete(post);
+  }
+
   return (
     <div className="post-card" style={{ animationDelay: `${index * 0.06}s` }}>
-      {/* Post actions (owner only) */}
-      {isOwner && (
-        <div className="post-card-actions">
-          <Link href={`/blog/${post._id}/edit`} className="btn-post-edit">edit</Link>
-          <button className="btn-post-delete" onClick={() => onDelete(post)}>delete</button>
-        </div>
-      )}
 
-      <div className="post-card-meta-row">
+      {/* ── Post Header: author + date (left) | actions (right) ── */}
+      <div className="post-card-header-row">
         <div className="post-card-meta-left">
-          <span className="create-post-author">{displayName}</span>
-          <span className="post-card-date">{formatDate(post.createdAt)}</span>
+          <span className="create-post-author">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+              <circle cx="12" cy="7" r="4"/>
+            </svg>
+            {displayName}
+          </span>
+          <span className="post-card-date">
+            {formatDate(post.createdAt)}
+            {post.edited && <span className="edited-badge">✏️ edited</span>}
+          </span>
+        </div>
+
+        <div className="post-card-actions">
+          {isOwner && (
+            <Link href={`/blog/${post._id}/edit`} className="btn-post-edit">edit</Link>
+          )}
+          {isOwner && (
+            <button className="btn-post-delete-pill" onClick={() => onDelete(post)}>
+              Delete
+            </button>
+          )}
+          {isAdmin && (
+            <button className="btn-post-delete-pill" onClick={() => setShowDeletePostModal(true)}>
+              Delete
+            </button>
+          )}
         </div>
       </div>
 
-      {/* Title + content */}
+      {/* ── Title + Content ── */}
       <h3 className="post-card-title">{post.title}</h3>
       <p className="post-card-preview">{post.content}</p>
 
       <hr className="post-detail-divider" />
 
-      {/* Comment list */}
+      {/* ── Comment List ── */}
       <div className="post-comment-list">
         <p className="post-comment-total">Total Comments: {comments.length}</p>
-        {comments.map((c) => {
+        {comments.length === 0 && (
+          <p className="no-comments-placeholder" style={{ textAlign: 'center', color: '#888', padding: '10px' }}>
+            Be the first to comment!
+          </p>
+        )}
+        {comments.map((c, idx) => {
           const authorObj = (typeof c.author === 'object' && c.author !== null) ? (c.author as any) : null;
           const commentAuthorId = authorObj ? authorObj._id : (typeof c.author === 'string' ? c.author : '');
           const authorName = authorObj ? authorObj.name : 'User';
@@ -117,39 +201,42 @@ export default function PostCard({
 
           return (
             <div key={c._id} className="post-comment-item">
-              <div className="comment-header">
-                <p className="post-comment-author">
-                  {authorName} {isMe && <span className="post-comment-you">(You)</span>}
-                </p>
-                {isMe && !isAdmin && (
-                  <div className="comment-actions">
-                    <button className="btn-comment-edit" onClick={() => onEditComment(c)}>Edit</button>
-                    <button className="btn-comment-delete" onClick={() => onDeleteComment(c)}>Delete</button>
-                  </div>
-                )}
-                {isAdmin && (
-                  <button
-                    className="btn-post-delete"
-                    style={{ fontSize: '0.7rem', padding: '2px 8px' }}
-                    onClick={() => setDeleteCommentTarget(c)}
-                  >
-                    delete
-                  </button>
-                )}
+              <div className="comment-header-row">
+                <div className="comment-label-group">
+                  <span className="comment-label">
+                    <strong>{authorName}</strong>
+                    {isMe && <span className="post-comment-you"> (You)</span>}
+                    : {formatDate(c.createdAt)}
+                    {c.edited && <span className="edited-badge">✏️ edited</span>}
+                  </span>
+                  <p className="post-comment-text">{c.text}</p>
+                </div>
+
+                <div className="comment-action-group">
+                  {isMe && !isAdmin && (
+                    <>
+                      <button type="button" className="btn-comment-edit" onClick={() => setEditTarget(c)}>Edit</button>
+                      <button type="button" className="btn-comment-delete-pill" onClick={() => setDeleteTarget(c)}>Delete</button>
+                    </>
+                  )}
+                  {isAdmin && (
+                    <button className="btn-comment-delete-pill" onClick={() => setDeleteCommentTarget(c)}>
+                      Delete
+                    </button>
+                  )}
+                </div>
               </div>
-              <p className="post-comment-text">{c.text}</p>
             </div>
           );
         })}
       </div>
-
-      {/* Comment input */}
       <div className="post-comment-box">
         <input
           className="post-comment-input"
           placeholder="Typing the comment ..."
           value={comment}
           onChange={e => setComment(e.target.value)}
+          maxLength={100}
           onKeyDown={e => e.key === 'Enter' && handleSendComment()}
         />
         <button className="post-comment-send" onClick={handleSendComment} disabled={sending || !comment.trim()}>
@@ -160,12 +247,36 @@ export default function PostCard({
         </button>
       </div>
 
+      {/* Admin: Delete Comment Modal */}
       <DeleteCommentAdminModal
         open={!!deleteCommentTarget}
         onClose={() => setDeleteCommentTarget(null)}
         onConfirm={handleAdminDeleteComment}
         loading={deletingComment}
       />
+
+      {/* Admin: Delete Post Modal (policy reason → เรียก onDelete เลย) */}
+      <DeletePostAdminModal
+        open={showDeletePostModal}
+        onClose={() => setShowDeletePostModal(false)}
+        onConfirm={handleAdminDeletePostConfirm}
+      />
+
+      {editTarget && (
+        <EditCommentModal
+          initialText={editTarget.text}
+          loading={actionLoading}
+          onClose={() => setEditTarget(null)}
+          onConfirm={handleConfirmEdit}
+        />
+      )}
+      {deleteTarget && (
+        <DeleteCommentModal
+          loading={actionLoading}
+          onClose={() => setDeleteTarget(null)}
+          onConfirm={handleConfirmDelete}
+        />
+      )}
     </div>
   );
 }

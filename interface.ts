@@ -128,6 +128,7 @@ export interface BlogPost {
   title: string;
   content: string;
   author: { _id: string; name: string } | string;
+  edited: boolean;
   createdAt: string;
   comments?: BlogComment[];
 }
@@ -143,6 +144,7 @@ export interface BlogComment {
   text: string;
   author: string;
   blog: string;
+  edited: boolean;
   createdAt: string;
 }
 
