@@ -1,7 +1,5 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { createPortal } from 'react-dom';
 import '@/styles/modal.css';
 
 interface ModalWrapperProps {
@@ -12,15 +10,7 @@ interface ModalWrapperProps {
 }
 
 export default function ModalWrapper({ open, onClose, className, children }: ModalWrapperProps) {
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  if (!mounted) return null;
-
-  return createPortal(
+  return (
     <div
       className={`modal-overlay${open ? ' open' : ''}`}
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
@@ -28,7 +18,6 @@ export default function ModalWrapper({ open, onClose, className, children }: Mod
       <div className={`modal${className ? ` ${className}` : ''}`} onClick={(e) => e.stopPropagation()}>
         {children}
       </div>
-    </div>,
-    document.body
+    </div>
   );
 }

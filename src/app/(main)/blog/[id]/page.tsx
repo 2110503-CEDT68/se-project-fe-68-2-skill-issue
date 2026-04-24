@@ -8,7 +8,9 @@ import getPost from '@/libs/getPost';
 import deletePost from '@/libs/deletePost';
 import getComments from '@/libs/getComments';
 import createComment from '@/libs/createComment';
+import deleteComment from '@/libs/deleteComment';
 import DeletePostModal from '@/components/blog/DeletePostModal';
+import DeleteCommentAdminModal from '@/components/modals/blog/DeleteCommentAdminModal';
 import ContentRemovedPage from '@/components/blog/ContentRemovedPage';
 import Toast from '@/components/Toast';
 import { useToast } from '@/hooks/useToast';
@@ -33,12 +35,16 @@ export default function BlogDetailPage() {
 
   const [currentUserId, setCurrentUserId] = useState('');
   const [currentUserName, setCurrentUserName] = useState('');
+  const [currentUserRole, setCurrentUserRole] = useState('');
 
   const [commentInput, setCommentInput] = useState('');
   const [sending, setSending] = useState(false);
 
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
+
+  const [deleteCommentTarget, setDeleteCommentTarget] = useState<BlogComment | null>(null);
+  const [deletingComment, setDeletingComment] = useState(false);
 
   const { toast, showToast } = useToast();
 
@@ -50,6 +56,7 @@ export default function BlogDetailPage() {
         const u = JSON.parse(raw);
         setCurrentUserId(u._id || '');
         setCurrentUserName(u.name || '');
+        setCurrentUserRole(u.role || '');
       }
     } catch { /* ignore */ }
   }, []);
@@ -124,6 +131,25 @@ export default function BlogDetailPage() {
       console.error('Comment failed:', err);
     } finally {
       setSending(false);
+    }
+  }
+
+  const isAdmin = currentUserRole === 'admin';
+
+  async function handleAdminDeleteComment(reason: string) {
+    if (!deleteCommentTarget || !post) return;
+    const token = localStorage.getItem('jf_token');
+    if (!token) return;
+    setDeletingComment(true);
+    try {
+      await deleteComment(token, post._id, deleteCommentTarget._id);
+      setComments(prev => prev.filter(c => c._id !== deleteCommentTarget._id));
+      showToast(`✅ Comment deleted. Reason: ${reason}`, 'success');
+      setDeleteCommentTarget(null);
+    } catch {
+      showToast('❌ Failed to delete comment', 'error');
+    } finally {
+      setDeletingComment(false);
     }
   }
 
@@ -220,10 +246,21 @@ export default function BlogDetailPage() {
 
                 return (
                   <div key={c._id} className="post-comment-item">
-                    <p className="post-comment-author">
-                      {name}
-                      {isMe && <span className="post-comment-you"> (You)</span>}
-                    </p>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <p className="post-comment-author" style={{ margin: 0 }}>
+                        {name}
+                        {isMe && <span className="post-comment-you"> (You)</span>}
+                      </p>
+                      {isAdmin && (
+                        <button
+                          className="btn-post-delete"
+                          style={{ fontSize: '0.7rem', padding: '2px 8px' }}
+                          onClick={() => setDeleteCommentTarget(c)}
+                        >
+                          delete
+                        </button>
+                      )}
+                    </div>
                     <p className="post-comment-text">{c.text}</p>
                   </div>
                 );
@@ -264,6 +301,13 @@ export default function BlogDetailPage() {
           onClose={() => setShowDeleteModal(false)}
         />
       )}
+
+      <DeleteCommentAdminModal
+        open={!!deleteCommentTarget}
+        onClose={() => setDeleteCommentTarget(null)}
+        onConfirm={handleAdminDeleteComment}
+        loading={deletingComment}
+      />
 
       <Toast toast={toast} />
     </div>

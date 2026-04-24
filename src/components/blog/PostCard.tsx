@@ -5,6 +5,8 @@ import Link from 'next/link';
 import { BlogPost, BlogComment } from '../../../interface';
 import createComment from '@/libs/createComment';
 import getComments from '@/libs/getComments';
+import deleteComment from '@/libs/deleteComment';
+import DeleteCommentAdminModal from '@/components/modals/blog/DeleteCommentAdminModal';
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleString('en-US', {
@@ -17,6 +19,7 @@ interface PostCardProps {
   post: BlogPost;
   currentUserId: string;
   currentUserName: string;
+  currentUserRole?: string;
   index: number;
   onDelete: (post: BlogPost) => void;
   onEditComment: (comment: BlogComment) => void;
@@ -28,12 +31,33 @@ export default function PostCard({
   onDelete, onEditComment, onDeleteComment 
 }: PostCardProps) {
   
+export default function PostCard({ post, currentUserId, currentUserName, currentUserRole, index, onDelete }: PostCardProps) {
+  const isAdmin = currentUserRole === 'admin';
+  // เช็คชื่อเจ้าของโพสต์ (ใช้ Logic เดียวกับคอมเมนต์เพื่อความชัวร์)
   const isOwner = currentUserId && (typeof post.author === 'object' ? post.author._id : post.author) === currentUserId;
   const displayName = typeof post.author === 'object' ? post.author.name : 'User';
 
   const [comments, setComments] = useState<BlogComment[]>([]);
   const [comment, setComment] = useState('');
   const [sending, setSending] = useState(false);
+  const [deleteCommentTarget, setDeleteCommentTarget] = useState<BlogComment | null>(null);
+  const [deletingComment, setDeletingComment] = useState(false);
+
+  async function handleAdminDeleteComment(reason: string) {
+    if (!deleteCommentTarget) return;
+    const token = localStorage.getItem('jf_token');
+    if (!token) return;
+    setDeletingComment(true);
+    try {
+      await deleteComment(token, post._id, deleteCommentTarget._id);
+      setComments(prev => prev.filter(c => c._id !== deleteCommentTarget._id));
+      setDeleteCommentTarget(null);
+    } catch (err) {
+      console.error('Delete comment failed:', err);
+    } finally {
+      setDeletingComment(false);
+    }
+  }
 
   useEffect(() => {
     getComments(post._id).then(res => {
@@ -105,6 +129,32 @@ export default function PostCard({
                     <button className="btn-comment-delete" onClick={() => onDeleteComment(c)}>Delete</button>
                   </div>
                 )}
+      {/* Comment list */}
+      {comments.length > 0 && (
+        <div className="post-comment-list">
+          <p className="post-comment-total">Total Comments: {comments.length}</p>
+          {[...comments].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).map((c) => {
+            const authorName = (typeof c.author === 'object' && c.author !== null)
+              ? (c.author as { name?: string }).name || 'Anonymous'
+              : (c.author === currentUserId ? currentUserName : 'Anonymous');
+            const isMe = (typeof c.author === 'object' && c.author !== null)
+              ? (c.author as { _id?: string })._id === currentUserId
+              : c.author === currentUserId;
+            return (
+              <div key={c._id} className="post-comment-item">
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <p className="post-comment-author" style={{ margin: 0 }}>{authorName}{isMe && <span className="post-comment-you"> (You)</span>}</p>
+                  {isAdmin && (
+                    <button
+                      className="btn-post-delete"
+                      style={{ fontSize: '0.7rem', padding: '2px 8px' }}
+                      onClick={() => setDeleteCommentTarget(c)}
+                    >
+                      delete
+                    </button>
+                  )}
+                </div>
+                <p className="post-comment-text">{c.text}</p>
               </div>
               <p className="post-comment-text">{c.text}</p>
             </div>
@@ -126,6 +176,12 @@ export default function PostCard({
           </svg>
         </button>
       </div>
+      <DeleteCommentAdminModal
+        open={!!deleteCommentTarget}
+        onClose={() => setDeleteCommentTarget(null)}
+        onConfirm={handleAdminDeleteComment}
+        loading={deletingComment}
+      />
     </div>
   );
 }
