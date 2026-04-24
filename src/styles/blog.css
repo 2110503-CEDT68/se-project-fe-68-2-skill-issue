@@ -129,6 +129,7 @@
   line-height: 1.6;
   display: -webkit-box;
   -webkit-line-clamp: 3;
+  line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
@@ -632,3 +633,74 @@
 .btn-post-delete:hover {
   background: #ffeaea;
 }
+
+/* ─── PostCard: New Layout (matching design) ─────── */
+
+/* Header row: meta left, actions right */
+.post-card-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+/* Delete button - pill style with border (matches design) */
+.btn-post-delete-pill {
+  font-size: 0.82rem;
+  font-weight: 500;
+  padding: 5px 16px;
+  border-radius: 8px;
+  border: 1.5px solid #e5a0a0;
+  background: #fff;
+  color: #c0392b;
+  cursor: pointer;
+  transition: background 0.15s;
+  white-space: nowrap;
+}
+.btn-post-delete-pill:hover { background: #ffeaea; }
+
+/* Comment item: horizontal layout */
+.comment-header-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.comment-label-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+  min-width: 0;
+}
+
+.comment-label {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #555;
+}
+
+.comment-action-group {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+  align-items: flex-start;
+  padding-top: 2px;
+}
+
+/* Comment delete pill button (same style as post delete) */
+.btn-comment-delete-pill {
+  font-size: 0.78rem;
+  font-weight: 500;
+  padding: 4px 12px;
+  border-radius: 8px;
+  border: 1.5px solid #e5a0a0;
+  background: #fff;
+  color: #c0392b;
+  cursor: pointer;
+  transition: background 0.15s;
+  white-space: nowrap;
+}
+.btn-comment-delete-pill:hover { background: #ffeaea; }
