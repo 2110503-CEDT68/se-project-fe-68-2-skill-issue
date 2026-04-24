@@ -27,6 +27,7 @@ export default function EditCommentModal({ initialText, loading, onConfirm, onCl
         }}
         value={text}
         onChange={(e) => setText(e.target.value)}
+        maxLength={100}
         placeholder="พิมพ์ข้อความใหม่ที่นี่..."
       />
       <div className="modal-actions">
