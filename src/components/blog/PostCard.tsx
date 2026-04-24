@@ -7,6 +7,7 @@ import createComment from '@/libs/createComment';
 import getComments from '@/libs/getComments';
 import deleteComment from '@/libs/deleteComment';
 import DeleteCommentAdminModal from '@/components/modals/blog/DeleteCommentAdminModal';
+import DeletePostAdminModal from '@/components/blog/DeletePostAdminModal';
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleString('en-US', {
@@ -37,8 +38,13 @@ export default function PostCard({
   const [comments, setComments] = useState<BlogComment[]>([]);
   const [comment, setComment] = useState('');
   const [sending, setSending] = useState(false);
+
+  // Admin delete comment
   const [deleteCommentTarget, setDeleteCommentTarget] = useState<BlogComment | null>(null);
   const [deletingComment, setDeletingComment] = useState(false);
+
+  // Admin delete post — modal เปิดตรงนี้ กด confirm ครั้งเดียว
+  const [showDeletePostModal, setShowDeletePostModal] = useState(false);
 
   useEffect(() => {
     getComments(post._id).then(res => {
@@ -83,33 +89,55 @@ export default function PostCard({
     }
   }
 
+  // Admin กด confirm policy → ปิด modal → แจ้ง parent ลบ (ไม่ต้องกดอีกรอบ)
+  function handleAdminDeletePostConfirm(_reason: string) {
+    setShowDeletePostModal(false);
+    onDelete(post);
+  }
+
   return (
     <div className="post-card" style={{ animationDelay: `${index * 0.06}s` }}>
-      {/* Post actions (owner only) */}
-      {isOwner && (
-        <div className="post-card-actions">
-          <Link href={`/blog/${post._id}/edit`} className="btn-post-edit">edit</Link>
-          <button className="btn-post-delete" onClick={() => onDelete(post)}>delete</button>
-        </div>
-      )}
 
-      <div className="post-card-meta-row">
+      {/* ── Post Header: author + date (left) | actions (right) ── */}
+      <div className="post-card-header-row">
         <div className="post-card-meta-left">
-          <span className="create-post-author">{displayName}</span>
+          <span className="create-post-author">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+              <circle cx="12" cy="7" r="4"/>
+            </svg>
+            {displayName}
+          </span>
           <span className="post-card-date">{formatDate(post.createdAt)}</span>
+        </div>
+
+        <div className="post-card-actions">
+          {isOwner && (
+            <Link href={`/blog/${post._id}/edit`} className="btn-post-edit">edit</Link>
+          )}
+          {isOwner && (
+            <button className="btn-post-delete-pill" onClick={() => onDelete(post)}>
+              Delete
+            </button>
+          )}
+          {isAdmin && (
+            <button className="btn-post-delete-pill" onClick={() => setShowDeletePostModal(true)}>
+              Delete
+            </button>
+          )}
         </div>
       </div>
 
-      {/* Title + content */}
+      {/* ── Title + Content ── */}
       <h3 className="post-card-title">{post.title}</h3>
       <p className="post-card-preview">{post.content}</p>
 
       <hr className="post-detail-divider" />
 
-      {/* Comment list */}
+      {/* ── Comment List ── */}
       <div className="post-comment-list">
         <p className="post-comment-total">Total Comments: {comments.length}</p>
-        {comments.map((c) => {
+        {comments.map((c, idx) => {
           const authorObj = (typeof c.author === 'object' && c.author !== null) ? (c.author as any) : null;
           const commentAuthorId = authorObj ? authorObj._id : (typeof c.author === 'string' ? c.author : '');
           const authorName = authorObj ? authorObj.name : 'User';
@@ -117,33 +145,35 @@ export default function PostCard({
 
           return (
             <div key={c._id} className="post-comment-item">
-              <div className="comment-header">
-                <p className="post-comment-author">
-                  {authorName} {isMe && <span className="post-comment-you">(You)</span>}
-                </p>
-                {isMe && !isAdmin && (
-                  <div className="comment-actions">
-                    <button className="btn-comment-edit" onClick={() => onEditComment(c)}>Edit</button>
-                    <button className="btn-comment-delete" onClick={() => onDeleteComment(c)}>Delete</button>
-                  </div>
-                )}
-                {isAdmin && (
-                  <button
-                    className="btn-post-delete"
-                    style={{ fontSize: '0.7rem', padding: '2px 8px' }}
-                    onClick={() => setDeleteCommentTarget(c)}
-                  >
-                    delete
-                  </button>
-                )}
+              <div className="comment-header-row">
+                <div className="comment-label-group">
+                  <span className="comment-label">
+                    comment {idx + 1} : <strong>{authorName}</strong>
+                    {isMe && <span className="post-comment-you"> (You)</span>}
+                  </span>
+                  <p className="post-comment-text">{c.text}</p>
+                </div>
+
+                <div className="comment-action-group">
+                  {isMe && !isAdmin && (
+                    <>
+                      <button className="btn-comment-edit" onClick={() => onEditComment(c)}>Edit</button>
+                      <button className="btn-comment-delete-pill" onClick={() => onDeleteComment(c)}>Delete</button>
+                    </>
+                  )}
+                  {isAdmin && (
+                    <button className="btn-comment-delete-pill" onClick={() => setDeleteCommentTarget(c)}>
+                      Delete
+                    </button>
+                  )}
+                </div>
               </div>
-              <p className="post-comment-text">{c.text}</p>
             </div>
           );
         })}
       </div>
 
-      {/* Comment input */}
+      {/* ── Comment Input ── */}
       <div className="post-comment-box">
         <input
           className="post-comment-input"
@@ -160,11 +190,19 @@ export default function PostCard({
         </button>
       </div>
 
+      {/* Admin: Delete Comment Modal */}
       <DeleteCommentAdminModal
         open={!!deleteCommentTarget}
         onClose={() => setDeleteCommentTarget(null)}
         onConfirm={handleAdminDeleteComment}
         loading={deletingComment}
+      />
+
+      {/* Admin: Delete Post Modal (policy reason → เรียก onDelete เลย) */}
+      <DeletePostAdminModal
+        open={showDeletePostModal}
+        onClose={() => setShowDeletePostModal(false)}
+        onConfirm={handleAdminDeletePostConfirm}
       />
     </div>
   );
