@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { TopMenuProps } from '../../interface';
+import { TopMenuProps } from 'interface';
 import TopMenuItem from './TopMenuItem';
 import '@/styles/topMenu.css';
 

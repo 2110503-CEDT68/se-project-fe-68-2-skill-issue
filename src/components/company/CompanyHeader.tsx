@@ -1,8 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { CompanyItem } from '../../interface';
-import StarDisplay from './review/StarDisplay';
+import { CompanyItem } from 'interface';
+import StarDisplay from '@/components/review/StarDisplay';
 
 // ── CompanyLogo ──────────────────────────────────────────────────────────────
 // Renders the company image, falling back to an emoji if the URL is absent

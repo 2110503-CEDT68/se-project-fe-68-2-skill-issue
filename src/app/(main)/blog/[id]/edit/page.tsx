@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
-import { BlogPost } from '../../../../../interface';
+import { BlogPost } from 'interface';
 import getPost from '@/libs/getPost';
 import editPost from '@/libs/editPost';
 import Toast from '@/components/Toast';

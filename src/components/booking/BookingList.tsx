@@ -4,23 +4,23 @@ import { useState, useEffect, useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
 import Card        from './Card';
-import EditModal   from './modals/EditModal';
-import CancelModal from './modals/CancelModal';
-import DetailModal from './modals/DetailModal';
-import EmptyState  from './EmptyState';
-import Toast       from './Toast';
+import EditModal   from '@/components/modals/EditModal';
+import CancelModal from '@/components/modals/CancelModal';
+import DetailModal from '@/components/modals/DetailModal';
+import EmptyState  from '@/components/EmptyState';
+import Toast       from '@/components/Toast';
 
-import getBookings   from '../libs/getBookings';
-import updateBooking from '../libs/updateBooking';
-import deleteBooking from '../libs/deleteBooking';
-import getReviews    from '../libs/getReviews';
+import getBookings   from '@/libs/getBookings';
+import updateBooking from '@/libs/updateBooking';
+import deleteBooking from '@/libs/deleteBooking';
+import getReviews    from '@/libs/getReviews';
 
 
-import { setBookings, removeBooking, updateBookingDate } from '../redux/features/bookSlice';
-import { RootState } from '../redux/store';
-import { BookingItem, ReviewItem } from '../../interface';
-import { formatDate } from '../utils/dateFormat';
-import { useToast } from '../hooks/useToast';
+import { setBookings, removeBooking, updateBookingDate } from '@/redux/features/bookSlice';
+import { RootState } from '@/redux/store';
+import { BookingItem, ReviewItem } from 'interface';
+import { formatDate } from '@/utils/dateFormat';
+import { useToast } from '@/hooks/useToast';
 
 import '@/styles/bookingList.css';
 

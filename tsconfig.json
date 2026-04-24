@@ -9,14 +9,14 @@
     "incremental": true,
     "module": "esnext",
     "esModuleInterop": true,
-    // แก้จาก "node" เป็น "bundler" เพื่อลด deprecation warning
-    "moduleResolution": "bundler", 
+    "moduleResolution": "bundler",
     "resolveJsonModule": true,
     "isolatedModules": true,
     "jsx": "preserve",
-    // ลบ baseUrl ออกถ้าไม่จำเป็น หรือถ้าจะใช้ paths ให้ใช้คู่กับ bundler
+    "baseUrl": ".",
+    "ignoreDeprecations": "6.0",
     "paths": {
-      "@/*": ["./src/*"] 
+      "@/*": ["./src/*"]
     },
     "plugins": [
       {
