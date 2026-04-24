@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 import { BlogPost } from 'interface';
@@ -9,15 +9,20 @@ import editPost from '@/libs/editPost';
 import Toast from '@/components/Toast';
 import { useToast } from '@/hooks/useToast';
 import '@/styles/blog.css';
+import UnsavedChangeModal from '@/components/modals/blog/UnsavedChangeModal';
 
 export default function EditPostPage() {
   const router = useRouter();
   const params = useParams();
   const postId = params?.id as string;
 
+  const [showLeaveModal, setShowLeaveModal] = useState(false);
+  const [pendingPath, setPendingPath] = useState('');
   const [post, setPost] = useState<BlogPost | null>(null);
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
+  const [originalTitle, setOriginalTitle] = useState('');     
+  const [originalContent, setOriginalContent] = useState(''); 
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
@@ -26,7 +31,49 @@ export default function EditPostPage() {
 
   const { toast, showToast } = useToast();
 
-  // Check user and load post
+ 
+  const hasChanges = title !== originalTitle || content !== originalContent;
+
+  
+  useEffect(() => {
+    if (!hasChanges) return;
+
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = '';
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [hasChanges]);
+
+  
+  const safeNavigate = useCallback((path: string) => {
+    if (hasChanges) {
+    
+    setPendingPath(path);
+    setShowLeaveModal(true);
+    return;
+  }
+
+  router.push(path);
+}, [hasChanges, router]);
+
+
+const confirmLeave = () => {
+  setShowLeaveModal(false);
+  if (pendingPath) {
+    router.push(pendingPath);
+  }
+};
+
+
+const cancelLeave = () => {
+  setShowLeaveModal(false);
+  setPendingPath('');
+};
+
+  // Check user
   useEffect(() => {
     try {
       const raw = localStorage.getItem('jf_user');
@@ -43,21 +90,16 @@ export default function EditPostPage() {
     }
   }, [router]);
 
-  // Load post data
+  // Load post
   useEffect(() => {
-    if (!postId) return;
-    
+    if (!postId || !currentUserId) return;
+
     const loadPost = async () => {
       setLoading(true);
       try {
         const data = await getPost(postId);
-        if (!data) {
-          setError('Post not found');
-          setLoading(false);
-          return;
-        }
-        
-        // Check if user is the owner
+        if (!data) { setError('Post not found'); setLoading(false); return; }
+
         const authorId = typeof data.author === 'object' ? data.author._id : data.author;
         if (authorId !== currentUserId) {
           showToast('❌ Not authorized to edit this post', 'error');
@@ -68,6 +110,8 @@ export default function EditPostPage() {
         setPost(data);
         setTitle(data.title);
         setContent(data.content);
+        setOriginalTitle(data.title);    
+        setOriginalContent(data.content); 
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load post');
       } finally {
@@ -75,9 +119,7 @@ export default function EditPostPage() {
       }
     };
 
-    if (currentUserId) {
-      loadPost();
-    }
+    loadPost();
   }, [postId, currentUserId, router, showToast]);
 
   const today = new Date().toLocaleDateString('en-GB', {
@@ -92,6 +134,9 @@ export default function EditPostPage() {
     try {
       const token = localStorage.getItem('jf_token') || '';
       await editPost(token, post._id, title.trim(), content.trim());
+      
+      setOriginalTitle(title.trim());
+      setOriginalContent(content.trim());
       router.push(`/blog/${post._id}`);
     } catch (err: unknown) {
       const errMsg = err instanceof Error ? err.message : 'Failed to update post';
@@ -113,22 +158,18 @@ export default function EditPostPage() {
   if (error) {
     return (
       <div className="blog-page">
-        <Link href="/blog" className="blog-back-link">
-          ← Back to Blog Feed
-        </Link>
-        <div style={{ padding: '40px 20px', textAlign: 'center', color: '#c0392b' }}>
-          {error}
-        </div>
+        <Link href="/blog" className="blog-back-link">← Back to Blog Feed</Link>
+        <div style={{ padding: '40px 20px', textAlign: 'center', color: '#c0392b' }}>{error}</div>
       </div>
     );
   }
 
   return (
     <div className="blog-page">
-      {/* Back link */}
-      <Link href={`/blog/${postId}`} className="blog-back-link">
+      {/*ใช้ safeNavigate แทน Link */}
+      <button className="blog-back-link" onClick={() => safeNavigate('/blog')}>
         ← Back
-      </Link>
+      </button>
 
       <div className="blog-header">
         <div className="blog-header-text">
@@ -138,7 +179,6 @@ export default function EditPostPage() {
       </div>
 
       <div className="create-post-card">
-        {/* Author & date row */}
         <div className="create-post-meta">
           <span className="create-post-author">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -158,7 +198,6 @@ export default function EditPostPage() {
           </span>
         </div>
 
-        {/* Inputs */}
         <input
           className="post-input"
           placeholder="Title"
@@ -178,15 +217,13 @@ export default function EditPostPage() {
           <span className="post-char-count">{content.length}/50</span>
         </div>
 
-        {error && (
-          <p className="create-post-error">{error}</p>
-        )}
+        {error && <p className="create-post-error">{error}</p>}
 
-        {/* Buttons */}
         <div className="create-post-actions">
+          {/*ใช้ safeNavigate แทน router.push */}
           <button
             className="btn-post-cancel"
-            onClick={() => router.push(`/blog/${postId}`)}
+            onClick={() => safeNavigate('/blog')}
             disabled={submitting}
           >
             Cancel
@@ -200,6 +237,23 @@ export default function EditPostPage() {
           </button>
         </div>
       </div>
+
+      <UnsavedChangeModal 
+        isOpen={showLeaveModal}
+        title="Unsaved Changes"
+        description="You have unsaved changes. Are you sure you want to leave? Your changes will be lost."
+        confirmText="Leave"
+        cancelText="Stay"
+        onConfirm={confirmLeave}
+        onCancel={cancelLeave}
+        icon={
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#A02020" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+            <line x1="12" y1="9" x2="12" y2="13"/>
+            <line x1="12" y1="17" x2="12.01" y2="17"/>
+          </svg>
+        }
+      />
 
       <Toast toast={toast} />
     </div>

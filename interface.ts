@@ -130,7 +130,6 @@ export interface BlogPost {
   author: { _id: string; name: string } | string;
   edited: boolean;
   createdAt: string;
-  comments?: BlogComment[];
 }
 
 export interface BlogPostJson {
