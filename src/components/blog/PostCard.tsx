@@ -22,8 +22,15 @@ interface PostCardProps {
   currentUserRole?: string;
   index: number;
   onDelete: (post: BlogPost) => void;
+  onEditComment: (comment: BlogComment) => void;
+  onDeleteComment: (comment: BlogComment) => void;
 }
 
+export default function PostCard({ 
+  post, currentUserId, currentUserName, index, 
+  onDelete, onEditComment, onDeleteComment 
+}: PostCardProps) {
+  
 export default function PostCard({ post, currentUserId, currentUserName, currentUserRole, index, onDelete }: PostCardProps) {
   const isAdmin = currentUserRole === 'admin';
   // เช็คชื่อเจ้าของโพสต์ (ใช้ Logic เดียวกับคอมเมนต์เพื่อความชัวร์)
@@ -52,44 +59,29 @@ export default function PostCard({ post, currentUserId, currentUserName, current
     }
   }
 
- useEffect(() => {
-  getComments(post._id).then(res => {
-    const rawComments = res.data || [];
-    // เรียงจากเก่าไปใหม่ (ASC)
-    const sorted = [...rawComments].sort((a, b) => 
-      new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-    );
-    setComments(sorted);
-  });
-}, [post._id]);
+  useEffect(() => {
+    getComments(post._id).then(res => {
+      const rawComments = res.data || [];
+      const sorted = [...rawComments].sort((a, b) => 
+        new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+      );
+      setComments(sorted);
+    });
+  }, [post._id]);
 
   async function handleSendComment() {
     const text = comment.trim();
     const token = localStorage.getItem('jf_token');
-    
-    if (!text || sending || !token) {
-      if (!token) console.error("No token found in localStorage");
-      return;
-    }
+    if (!text || sending || !token) return;
 
     setSending(true);
     try {
       await createComment(token, post._id, text);
-      
-      // ── Optimistic Update ──
-      // จำลองก้อนข้อมูลให้เหมือนที่ Backend ส่งมา (มี author เป็น object)
-      const newComment: any = {
-        _id: Date.now().toString(),
-        text,
-        author: { _id: currentUserId, name: currentUserName }, 
-        blog: post._id,
-        createdAt: new Date().toISOString(),
-      };
-      
-      setComments(prev => [...prev, newComment]);
+      const res = await getComments(post._id);
+      setComments(res.data || []);
       setComment('');
     } catch (err) {
-      console.error("Post failed:", err);
+      console.error(err);
     } finally {
       setSending(false);
     }
@@ -97,44 +89,46 @@ export default function PostCard({ post, currentUserId, currentUserName, current
 
   return (
     <div className="post-card" style={{ animationDelay: `${index * 0.06}s` }}>
-      {/* Edit & Delete buttons — top right corner, visible only to owner */}
       {isOwner && (
         <div className="post-card-actions">
-          <Link href={`/blog/${post._id}/edit`} className="btn-post-edit">
-            edit
-          </Link>
-          <button
-            className="btn-post-delete"
-            onClick={() => onDelete(post)}
-            aria-label="Delete this post"
-          >
-            delete
-          </button>
+          <Link href={`/blog/${post._id}/edit`} className="btn-post-edit">edit</Link>
+          <button className="btn-post-delete" onClick={() => onDelete(post)}>delete</button>
         </div>
       )}
 
-      {/* Author + date row */}
       <div className="post-card-meta-row">
         <div className="post-card-meta-left">
-          <span className="create-post-author">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-              <circle cx="12" cy="7" r="4"/>
-            </svg>
-            {displayName}
-          </span>
+          <span className="create-post-author">{displayName}</span>
           <span className="post-card-date">{formatDate(post.createdAt)}</span>
         </div>
       </div>
 
-      {/* Title */}
       <h3 className="post-card-title">{post.title}</h3>
-
-      {/* Content */}
       <p className="post-card-preview">{post.content}</p>
 
       <hr className="post-detail-divider" />
 
+      <div className="post-comment-list">
+        <p className="post-comment-total">Total Comments: {comments.length}</p>
+        {comments.map((c) => {
+          // ป้องกัน error c.author is possibly null
+          const authorObj = (typeof c.author === 'object' && c.author !== null) ? (c.author as any) : null;
+          const commentAuthorId = authorObj ? authorObj._id : (typeof c.author === 'string' ? c.author : '');
+          const authorName = authorObj ? authorObj.name : 'User';
+          const isMe = currentUserId && commentAuthorId === currentUserId;
+
+          return (
+            <div key={c._id} className="post-comment-item">
+              <div className="comment-header">
+                <p className="post-comment-author">
+                  {authorName} {isMe && <span className="post-comment-you">(You)</span>}
+                </p>
+                {isMe && (
+                  <div className="comment-actions">
+                    <button className="btn-comment-edit" onClick={() => onEditComment(c)}>Edit</button>
+                    <button className="btn-comment-delete" onClick={() => onDeleteComment(c)}>Delete</button>
+                  </div>
+                )}
       {/* Comment list */}
       {comments.length > 0 && (
         <div className="post-comment-list">
@@ -162,29 +156,23 @@ export default function PostCard({ post, currentUserId, currentUserName, current
                 </div>
                 <p className="post-comment-text">{c.text}</p>
               </div>
-            );
-          })}
-        </div>
-      )}
+              <p className="post-comment-text">{c.text}</p>
+            </div>
+          );
+        })}
+      </div>
 
-      {/* Comment input */}
       <div className="post-comment-box">
         <input
           className="post-comment-input"
           placeholder="Typing the comment ..."
           value={comment}
           onChange={e => setComment(e.target.value)}
-          maxLength={100}
-          onKeyDown={e => { if (e.key === 'Enter') handleSendComment(); }}
+          onKeyDown={e => e.key === 'Enter' && handleSendComment()}
         />
-        <button
-          className="post-comment-send"
-          onClick={handleSendComment}
-          disabled={sending || !comment.trim()}
-        >
+        <button className="post-comment-send" onClick={handleSendComment} disabled={sending || !comment.trim()}>
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <line x1="22" y1="2" x2="11" y2="13"/>
-            <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+            <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
           </svg>
         </button>
       </div>
