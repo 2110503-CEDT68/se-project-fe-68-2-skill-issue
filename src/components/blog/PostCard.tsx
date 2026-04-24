@@ -164,7 +164,7 @@ export default function PostCard({
 
         <div className="post-card-actions">
           {isOwner && (
-            <Link href={`/blog/${post._id}/edit`} className="btn-post-edit">edit</Link>
+            <Link href={`/blog/${post._id}/edit`} className="btn-post-edit">Edit</Link>
           )}
           {isOwner && (
             <button className="btn-post-delete-pill" onClick={() => onDelete(post)}>
