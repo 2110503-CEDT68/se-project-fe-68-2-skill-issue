@@ -106,27 +106,6 @@ export default function PostCard({
 
       <hr className="post-detail-divider" />
 
-      <div className="post-comment-list">
-        <p className="post-comment-total">Total Comments: {comments.length}</p>
-        {comments.map((c) => {
-          // ป้องกัน error c.author is possibly null
-          const authorObj = (typeof c.author === 'object' && c.author !== null) ? (c.author as any) : null;
-          const commentAuthorId = authorObj ? authorObj._id : (typeof c.author === 'string' ? c.author : '');
-          const authorName = authorObj ? authorObj.name : 'User';
-          const isMe = currentUserId && commentAuthorId === currentUserId;
-
-          return (
-            <div key={c._id} className="post-comment-item">
-              <div className="comment-header">
-                <p className="post-comment-author">
-                  {authorName} {isMe && <span className="post-comment-you">(You)</span>}
-                </p>
-                {isMe && (
-                  <div className="comment-actions">
-                    <button className="btn-comment-edit" onClick={() => onEditComment(c)}>Edit</button>
-                    <button className="btn-comment-delete" onClick={() => onDeleteComment(c)}>Delete</button>
-                  </div>
-                )}
       {/* Comment list */}
       <div className="post-comment-list">
         <p className="post-comment-total">Total Comments: {comments.length}</p>
@@ -164,6 +143,7 @@ export default function PostCard({
         })}
       </div>
 
+      {/* Comment input */}
       <div className="post-comment-box">
         <input
           className="post-comment-input"
