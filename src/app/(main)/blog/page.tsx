@@ -28,6 +28,7 @@ export default function BlogPage() {
 
   const [currentUserId, setCurrentUserId] = useState('');
   const [currentUserName, setCurrentUserName] = useState('');
+  const [currentUserRole, setCurrentUserRole] = useState(''); // ✅ เพิ่ม role
   const [deleteTarget, setDeleteTarget] = useState<BlogPost | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const { toast, showToast } = useToast();
@@ -39,6 +40,7 @@ export default function BlogPage() {
         const u = JSON.parse(raw);
         setCurrentUserId(u._id || '');
         setCurrentUserName(u.name || '');
+        setCurrentUserRole(u.role || ''); // ✅ อ่าน role จาก localStorage
       }
     } catch { /* ignore */ }
   }, []);
@@ -108,7 +110,8 @@ export default function BlogPage() {
           <h1>Job Fair Community</h1>
           <p>Explore and exchange opinion</p>
         </div>
-        {currentUserId && (
+        {/* ✅ ซ่อนปุ่มเมื่อ role เป็น admin */}
+        {currentUserId && currentUserRole !== 'admin' && (
           <button className="btn-create-post" onClick={() => router.push('/blog/create')}>
             Create Post Now!!
           </button>
