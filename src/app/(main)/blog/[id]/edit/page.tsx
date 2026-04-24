@@ -173,9 +173,9 @@ export default function EditPostPage() {
             placeholder="Write Your Text!!!"
             value={content}
             onChange={e => setContent(e.target.value)}
-            maxLength={250}
+            maxLength={50}
           />
-          <span className="post-char-count">{content.length}/250</span>
+          <span className="post-char-count">{content.length}/50</span>
         </div>
 
         {error && (
