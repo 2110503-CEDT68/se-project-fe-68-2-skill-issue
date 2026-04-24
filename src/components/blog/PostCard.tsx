@@ -5,7 +5,9 @@ import Link from 'next/link';
 import { BlogPost, BlogComment } from '../../../interface';
 import createComment from '@/libs/createComment';
 import getComments from '@/libs/getComments';
-import deleteComment from '@/libs/deleteComment';
+import { updateComment, deleteComment } from '@/libs/commentApi';
+import EditCommentModal from '@/components/modals/EditCommentModal';
+import DeleteCommentModal from '@/components/modals/DeleteCommentModal';
 import DeleteCommentAdminModal from '@/components/modals/blog/DeleteCommentAdminModal';
 import DeletePostAdminModal from '@/components/blog/DeletePostAdminModal';
 
@@ -23,13 +25,12 @@ interface PostCardProps {
   currentUserRole?: string;
   index: number;
   onDelete: (post: BlogPost) => void;
-  onEditComment: (comment: BlogComment) => void;
-  onDeleteComment: (comment: BlogComment) => void;
+  onShowToast: (msg: string, type: 'success' | 'error') => void;
 }
 
 export default function PostCard({
   post, currentUserId, currentUserName, currentUserRole, index,
-  onDelete, onEditComment, onDeleteComment,
+  onDelete,onShowToast,
 }: PostCardProps) {
   const isAdmin = currentUserRole === 'admin';
   const isOwner = !!currentUserId && (typeof post.author === 'object' ? post.author._id : post.author) === currentUserId;
@@ -38,10 +39,14 @@ export default function PostCard({
   const [comments, setComments] = useState<BlogComment[]>([]);
   const [comment, setComment] = useState('');
   const [sending, setSending] = useState(false);
+  const [editTarget, setEditTarget] = useState<BlogComment | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<BlogComment | null>(null);
+  const [actionLoading, setActionLoading] = useState(false);
 
   // Admin delete comment
   const [deleteCommentTarget, setDeleteCommentTarget] = useState<BlogComment | null>(null);
   const [deletingComment, setDeletingComment] = useState(false);
+  
 
   // Admin delete post — modal เปิดตรงนี้ กด confirm ครั้งเดียว
   const [showDeletePostModal, setShowDeletePostModal] = useState(false);
@@ -50,11 +55,19 @@ export default function PostCard({
     getComments(post._id).then(res => {
       const rawComments = res.data || [];
       const sorted = [...rawComments].sort((a, b) =>
-        new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
       );
       setComments(sorted);
     });
   }, [post._id]);
+
+  const refreshComments = async () => {
+    const res = await getComments(post._id);
+    const sorted = (res.data || []).sort((a: any, b: any) => 
+      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
+    setComments(sorted);
+  };
 
   async function handleSendComment() {
     const text = comment.trim();
@@ -66,23 +79,58 @@ export default function PostCard({
       const res = await getComments(post._id);
       setComments(res.data || []);
       setComment('');
+      onShowToast('✅ Comment posted!', 'success');
     } catch (err) {
+      onShowToast('❌ Failed to post comment', 'error');
       console.error(err);
     } finally {
       setSending(false);
     }
   }
 
+  async function handleConfirmEdit(newText: string) {
+  if (!editTarget) return;
+    const token = localStorage.getItem('jf_token') || '';
+    setActionLoading(true);
+    try {
+      await updateComment(token, editTarget._id, newText);
+      await refreshComments();
+      setEditTarget(null);
+      onShowToast('✅ Comment updated!', 'success');
+    } catch (err) { 
+      console.error(err); 
+      onShowToast('❌ Failed to update comment', 'error');
+    } 
+    finally { setActionLoading(false); }
+  }
+
+  async function handleConfirmDelete() {
+    if (!deleteTarget) return;
+    const token = localStorage.getItem('jf_token') || '';
+    setActionLoading(true);
+    try {
+      await deleteComment(token, deleteTarget._id);
+      setComments(prev => prev.filter(c => c._id !== deleteTarget._id));
+      setDeleteTarget(null);
+      onShowToast('✅ Comment deleted!', 'success');
+    } catch (err) {
+      console.error(err);
+      onShowToast('❌ Failed to delete comment', 'error');
+    } 
+    finally { setActionLoading(false); }
+  }
   async function handleAdminDeleteComment(reason: string) {
     if (!deleteCommentTarget) return;
     const token = localStorage.getItem('jf_token');
     if (!token) return;
     setDeletingComment(true);
     try {
-      await deleteComment(token, post._id, deleteCommentTarget._id);
+      await deleteComment(token, deleteCommentTarget._id);
       setComments(prev => prev.filter(c => c._id !== deleteCommentTarget._id));
+      onShowToast('✅ Admin removed comment', 'success');
       setDeleteCommentTarget(null);
     } catch (err) {
+      onShowToast('❌ Admin delete failed', 'error');
       console.error('Delete comment failed:', err);
     } finally {
       setDeletingComment(false);
@@ -108,7 +156,10 @@ export default function PostCard({
             </svg>
             {displayName}
           </span>
-          <span className="post-card-date">{formatDate(post.createdAt)}</span>
+          <span className="post-card-date">
+            {formatDate(post.createdAt)}
+            {post.edited && <span className="edited-badge">✏️ edited</span>}
+          </span>
         </div>
 
         <div className="post-card-actions">
@@ -137,6 +188,11 @@ export default function PostCard({
       {/* ── Comment List ── */}
       <div className="post-comment-list">
         <p className="post-comment-total">Total Comments: {comments.length}</p>
+        {comments.length === 0 && (
+          <p className="no-comments-placeholder" style={{ textAlign: 'center', color: '#888', padding: '10px' }}>
+            Be the first to comment!
+          </p>
+        )}
         {comments.map((c, idx) => {
           const authorObj = (typeof c.author === 'object' && c.author !== null) ? (c.author as any) : null;
           const commentAuthorId = authorObj ? authorObj._id : (typeof c.author === 'string' ? c.author : '');
@@ -150,6 +206,8 @@ export default function PostCard({
                   <span className="comment-label">
                     comment {idx + 1} : <strong>{authorName}</strong>
                     {isMe && <span className="post-comment-you"> (You)</span>}
+                    {formatDate(c.createdAt)}
+                    {c.edited && <span className="edited-badge">✏️ edited</span>}
                   </span>
                   <p className="post-comment-text">{c.text}</p>
                 </div>
@@ -157,8 +215,8 @@ export default function PostCard({
                 <div className="comment-action-group">
                   {isMe && !isAdmin && (
                     <>
-                      <button className="btn-comment-edit" onClick={() => onEditComment(c)}>Edit</button>
-                      <button className="btn-comment-delete-pill" onClick={() => onDeleteComment(c)}>Delete</button>
+                      <button type="button" className="btn-comment-edit" onClick={() => setEditTarget(c)}>Edit</button>
+                      <button type="button" className="btn-comment-delete-pill" onClick={() => setDeleteTarget(c)}>Delete</button>
                     </>
                   )}
                   {isAdmin && (
@@ -172,14 +230,13 @@ export default function PostCard({
           );
         })}
       </div>
-
-      {/* ── Comment Input ── */}
       <div className="post-comment-box">
         <input
           className="post-comment-input"
           placeholder="Typing the comment ..."
           value={comment}
           onChange={e => setComment(e.target.value)}
+          maxLength={100}
           onKeyDown={e => e.key === 'Enter' && handleSendComment()}
         />
         <button className="post-comment-send" onClick={handleSendComment} disabled={sending || !comment.trim()}>
@@ -204,6 +261,22 @@ export default function PostCard({
         onClose={() => setShowDeletePostModal(false)}
         onConfirm={handleAdminDeletePostConfirm}
       />
+
+      {editTarget && (
+        <EditCommentModal
+          initialText={editTarget.text}
+          loading={actionLoading}
+          onClose={() => setEditTarget(null)}
+          onConfirm={handleConfirmEdit}
+        />
+      )}
+      {deleteTarget && (
+        <DeleteCommentModal
+          loading={actionLoading}
+          onClose={() => setDeleteTarget(null)}
+          onConfirm={handleConfirmDelete}
+        />
+      )}
     </div>
   );
 }

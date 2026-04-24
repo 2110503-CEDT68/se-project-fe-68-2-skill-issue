@@ -181,8 +181,7 @@ export default function AdminBlogsPage() {
               currentUserRole="admin"
               index={idx}
               onDelete={handleDeletePost}
-              onEditComment={setEditCommentTarget}
-              onDeleteComment={setDeleteCommentTarget}
+              onShowToast={showToast}
             />
           ))}
         </div>

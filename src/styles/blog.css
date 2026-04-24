@@ -95,6 +95,9 @@
 .post-card-date {
   font-size: 0.78rem;
   color: var(--muted, #888);
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .post-card-title {
@@ -663,7 +666,7 @@
 /* Comment item: horizontal layout */
 .comment-header-row {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   gap: 12px;
 }
@@ -680,13 +683,16 @@
   font-size: 0.82rem;
   font-weight: 600;
   color: #555;
+  display: flex;
+  align-items: center;
+  gap: 5px;
 }
 
 .comment-action-group {
   display: flex;
   gap: 6px;
   flex-shrink: 0;
-  align-items: flex-start;
+  align-items: center;
   padding-top: 2px;
 }
 
@@ -704,3 +710,32 @@
   white-space: nowrap;
 }
 .btn-comment-delete-pill:hover { background: #ffeaea; }
+
+.btn-comment-edit {
+  font-size: 0.78rem;
+  font-weight: 500;
+  padding: 4px 12px;
+  border-radius: 8px;
+  border: 1.5px solid #e5e5e5;
+  background: #fff;
+  color: #333;
+  cursor: pointer;
+  transition: background 0.15s;
+  white-space: nowrap;
+}
+.btn-comment-edit:hover { background: #ffeaea; }
+
+.edited-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 8px;
+  background: #FFF5E6;
+  color: #B85C00;
+  border: 1px solid #F5C98A;
+  border-radius: 6px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+}
