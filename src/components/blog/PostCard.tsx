@@ -204,9 +204,9 @@ export default function PostCard({
               <div className="comment-header-row">
                 <div className="comment-label-group">
                   <span className="comment-label">
-                    comment {idx + 1} : <strong>{authorName}</strong>
+                    <strong>{authorName}</strong>
                     {isMe && <span className="post-comment-you"> (You)</span>}
-                    {formatDate(c.createdAt)}
+                    : {formatDate(c.createdAt)}
                     {c.edited && <span className="edited-badge">✏️ edited</span>}
                   </span>
                   <p className="post-comment-text">{c.text}</p>
