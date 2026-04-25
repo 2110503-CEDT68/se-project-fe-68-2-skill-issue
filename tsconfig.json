@@ -30,9 +30,5 @@
     "**/*.ts",
     "**/*.tsx"
   ],
-<<<<<<< HEAD
-  "exclude": ["node_modules"]
-=======
   "exclude": ["node_modules", "playwright.config.ts", "tests/**/*"]
->>>>>>> b00477c3fd623cacc4aa71bacd10b04e0895079d
 }
