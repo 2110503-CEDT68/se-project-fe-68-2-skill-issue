@@ -199,7 +199,7 @@ export default function BlogDetailPage() {
           </div>
         )}
 
-        {currentUserId && (
+        {currentUserId && !isAdmin && (
           <div className="post-comment-box">
             <input
               className="post-comment-input"

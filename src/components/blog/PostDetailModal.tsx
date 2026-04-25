@@ -21,6 +21,9 @@ interface PostDetailModalProps {
 export default function PostDetailModal({ post, authorName, onClose }: PostDetailModalProps) {
   const [comment, setComment] = useState('');
   const [sending, setSending] = useState(false);
+  const isAdmin = typeof window !== 'undefined'
+    ? (() => { try { return JSON.parse(localStorage.getItem('jf_user') || '{}').role === 'admin'; } catch { return false; } })()
+    : false;
 
   async function handleSendComment() {
     const text = comment.trim();
@@ -60,7 +63,7 @@ export default function PostDetailModal({ post, authorName, onClose }: PostDetai
       <hr className="post-detail-divider" />
 
       {/* Comment input */}
-      <div className="post-comment-box">
+      {!isAdmin && <div className="post-comment-box">
         <input
           className="post-comment-input"
           placeholder="Typing the comment ..."
@@ -79,7 +82,7 @@ export default function PostDetailModal({ post, authorName, onClose }: PostDetai
             <polygon points="22 2 15 22 11 13 2 9 22 2"/>
           </svg>
         </button>
-      </div>
+      </div>}
     </ModalWrapper>
   );
 }
