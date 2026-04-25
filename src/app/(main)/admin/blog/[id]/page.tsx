@@ -10,6 +10,7 @@ import getComments from '@/libs/getComments';
 import deleteComment from '@/libs/deleteComment';
 import DeleteCommentAdminModal from '@/components/modals/blog/DeleteCommentAdminModal';
 import ConfirmModal from '@/components/modals/ConfirmModal';
+import DeletePostAdminModal from '@/components/blog/DeletePostAdminModal';
 import ContentRemovedPage from '@/components/blog/ContentRemovedPage';
 import Toast from '@/components/Toast';
 import { useToast } from '@/hooks/useToast';
@@ -235,7 +236,7 @@ export default function AdminBlogDetailPage() {
       </article>
 
       <ConfirmModal
-        open={showDeletePostModal}
+        open = {false}
         title="Remove Blog Post?"
         message={
           <>
@@ -253,6 +254,11 @@ export default function AdminBlogDetailPage() {
         onClose={() => setShowDeletePostModal(false)}
       />
 
+      <DeletePostAdminModal
+        open={showDeletePostModal}
+        onClose={() => setShowDeletePostModal(false)}
+        onConfirm={handleDeletePost}
+      />
       <DeleteCommentAdminModal
         open={!!deleteCommentTarget}
         onClose={() => setDeleteCommentTarget(null)}
