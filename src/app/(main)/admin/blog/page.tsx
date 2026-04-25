@@ -140,6 +140,9 @@ export default function AdminBlogsPage() {
           <Link href="/admin/dashboard" className="btn-primary">Bookings</Link>
           <Link href="/admin/companies" className="btn-primary">Companies</Link>
         </div> */}
+        <div className="admin-nav-links">
+          <Link href="/admin/comments" className="btn-primary">Comments Monitor</Link>
+        </div>
       </div>
 
       <div className="blog-search-wrapper">
