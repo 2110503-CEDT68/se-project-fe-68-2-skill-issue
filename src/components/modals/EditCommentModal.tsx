@@ -51,7 +51,7 @@ export default function EditCommentModal({ initialText, loading, onConfirm, onCl
       {/* ── Main edit modal ── */}
       <ModalWrapper open onClose={handleCloseRequest}>
         <div className="modal-icon">📝</div>
-        <h3>แก้ไขความคิดเห็น</h3>
+        <h3>Edit Comment</h3>
 
         <textarea
           className="post-textarea"
@@ -66,21 +66,21 @@ export default function EditCommentModal({ initialText, loading, onConfirm, onCl
           value={text}
           onChange={(e) => setText(e.target.value)}
           maxLength={100}
-          placeholder="พิมพ์ข้อความใหม่ที่นี่..."
+          placeholder="Enter new text here..."
         />
 
        
 
         <div className="modal-actions">
           <button className="btn-modal-cancel" onClick={handleCloseRequest}>
-            ยกเลิก
+            Cancel
           </button>
           <button
             className="btn-modal-confirm"
             onClick={() => onConfirm(text)}
             disabled={loading || !text.trim()}
           >
-            {loading ? 'กำลังบันทึก...' : 'อัปเดต'}
+            {loading ? 'Saving...' : 'Update'}
           </button>
         </div>
       </ModalWrapper>
@@ -89,20 +89,20 @@ export default function EditCommentModal({ initialText, loading, onConfirm, onCl
       {showDiscardConfirm && (
         <ModalWrapper open onClose={handleCancelDiscard}>
           <div className="modal-icon">⚠️</div>
-          <h3>ยกเลิกการแก้ไข?</h3>
+          <h3>Discard Changes?</h3>
           <p style={{ color: '#666', marginTop: '8px', fontSize: '14px' }}>
-            คุณมีการเปลี่ยนแปลงที่ยังไม่ได้บันทึก หากออกตอนนี้ การแก้ไขทั้งหมดจะหายไป
+            You have unsaved changes. If you leave now, all edits will be lost.
           </p>
           <div className="modal-actions">
             <button className="btn-modal-cancel" onClick={handleCancelDiscard}>
-              อยู่ต่อ
+              Stay
             </button>
             <button
               className="btn-modal-confirm"
               style={{ background: '#ef4444' }}
               onClick={handleConfirmDiscard}
             >
-              ทิ้งการเปลี่ยนแปลง
+              Discard Changes
             </button>
           </div>
         </ModalWrapper>
