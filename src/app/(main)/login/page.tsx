@@ -14,6 +14,8 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [showPw, setShowPw] = useState(false);
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -25,17 +27,18 @@ export default function LoginPage() {
       return;
     }
 
+    setLoading(true);
     try {
       const data = await userLogin(email, password);
-      console.log('API response:', data);
-      // เก็บ token ใน cookie เพื่อให้ middleware อ่านได้
       document.cookie = `jf_token=${data.token}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax`;
       localStorage.setItem('jf_token', data.token);
       const me = await getMe(data.token);
       localStorage.setItem('jf_user', JSON.stringify(me.data));
-      router.push('/dashboard');
+      setSuccess(true);
+      setTimeout(() => router.push('/dashboard'), 800);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong. Please try again.');
+      setLoading(false);
     }
   };
 
@@ -93,15 +96,27 @@ export default function LoginPage() {
               </div>
             </div>
 
-            <button type="submit" className="btn-auth">
-              Sign In
-              <svg
-                width="16" height="16" fill="none"
-                stroke="currentColor" strokeWidth="2"
-                viewBox="0 0 24 24"
-              >
-                <path d="M5 12h14M12 5l7 7-7 7" />
-              </svg>
+            <button type="submit" className="btn-auth" disabled={loading || success}>
+              {success ? (
+                <>
+                  <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
+                  Welcome back!
+                </>
+              ) : loading ? (
+                <>
+                  <span className="btn-spinner" />
+                  Signing in…
+                </>
+              ) : (
+                <>
+                  Sign In
+                  <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                    <path d="M5 12h14M12 5l7 7-7 7" />
+                  </svg>
+                </>
+              )}
             </button>
           </form>
 
