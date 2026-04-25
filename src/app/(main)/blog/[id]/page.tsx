@@ -33,6 +33,7 @@ export default function BlogDetailPage() {
 
   const [currentUserId, setCurrentUserId] = useState('');
   const [currentUserName, setCurrentUserName] = useState('');
+  const [isAdmin, setIsAdmin] = useState(false);
 
   const [commentInput, setCommentInput] = useState('');
   const [sending, setSending] = useState(false);
@@ -49,6 +50,7 @@ export default function BlogDetailPage() {
         const u = JSON.parse(raw);
         setCurrentUserId(u._id || '');
         setCurrentUserName(u.name || '');
+        setIsAdmin(u.role === 'admin');
       }
     } catch { /* ignore */ }
   }, []);
