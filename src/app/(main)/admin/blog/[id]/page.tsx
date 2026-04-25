@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
-import { useRouter, useParams } from 'next/navigation';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { useRouter, useParams, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { BlogPost, BlogComment } from '../../../../../../interface';
 import getPost from '@/libs/getPost';
@@ -26,7 +26,11 @@ function formatDate(iso: string) {
 export default function AdminBlogDetailPage() {
   const router = useRouter();
   const params = useParams();
+  const searchParams = useSearchParams();
   const postId = params?.id as string;
+  const highlightId = searchParams?.get('highlight') ?? null;
+
+  const highlightedRef = useRef<HTMLDivElement | null>(null);
 
   const [post, setPost] = useState<BlogPost | null>(null);
   const [comments, setComments] = useState<BlogComment[]>([]);
@@ -64,6 +68,15 @@ export default function AdminBlogDetailPage() {
   }, [postId]);
 
   useEffect(() => { loadDetail(); }, [loadDetail]);
+
+  // Scroll to & highlight the target comment once data is loaded
+  useEffect(() => {
+    if (!loading && highlightId && highlightedRef.current) {
+      setTimeout(() => {
+        highlightedRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 150);
+    }
+  }, [loading, highlightId]);
 
   async function handleDeletePost() {
     if (!post) return;
@@ -117,7 +130,12 @@ export default function AdminBlogDetailPage() {
 
   return (
     <div className="blog-page">
-      <Link href="/admin/blog" className="post-back-link">← Back to Blogs Monitor</Link>
+      <Link
+        href={highlightId ? '/admin/comments' : '/admin/blog'}
+        className="post-back-link"
+      >
+        ← Back to {highlightId ? 'Comments Monitor' : 'Blogs Monitor'}
+      </Link>
 
       <article className="post-card">
         <div className="post-detail-meta-row">
@@ -170,10 +188,35 @@ export default function AdminBlogDetailPage() {
                     typeof c.author === 'object' && c.author !== null
                       ? (c.author as { name?: string }).name || 'Anonymous'
                       : 'Anonymous';
+                  const isHighlighted = highlightId === c._id;
                   return (
-                    <div key={c._id} className="post-comment-item">
+                    <div
+                      key={c._id}
+                      id={`comment-${c._id}`}
+                      ref={isHighlighted ? highlightedRef : null}
+                      className="post-comment-item"
+                      style={isHighlighted ? {
+                        background: '#FFF8F0',
+                        border: '2px solid var(--accent)',
+                        borderRadius: 10,
+                        padding: '10px 14px',
+                        transition: 'background 0.4s ease',
+                      } : undefined}
+                    >
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <p className="post-comment-author" style={{ margin: 0 }}>{name}</p>
+                        <p className="post-comment-author" style={{ margin: 0 }}>
+                          {name}
+                          {isHighlighted && (
+                            <span style={{
+                              marginLeft: 8, fontSize: '0.7rem', fontWeight: 700,
+                              color: 'var(--accent)', background: '#FFF0EC',
+                              border: '1px solid var(--accent)', borderRadius: 6,
+                              padding: '2px 8px',
+                            }}>
+                              🔍 highlighted
+                            </span>
+                          )}
+                        </p>
                         <button
                           className="btn-post-delete"
                           style={{ fontSize: '0.7rem', padding: '2px 8px' }}
