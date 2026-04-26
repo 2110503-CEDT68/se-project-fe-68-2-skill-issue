@@ -3,8 +3,8 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { TopMenuProps } from 'interface';
-import TopMenuItem from './TopMenuItem';
+import { TopMenuProps } from '../../../interface';
+import TopMenuItem from '@/components/layout/TopMenuItem';
 import '@/styles/topMenu.css';
 
 export default function TopMenu({ userName, isFull, backToDashboard }: TopMenuProps) {
@@ -68,18 +68,17 @@ export default function TopMenu({ userName, isFull, backToDashboard }: TopMenuPr
         )}
         {isAdmin && <TopMenuItem title="Booking Monitor" pageRef="/admin/dashboard" />}
         {isAdmin && <TopMenuItem title="Review Monitor" pageRef="/admin/reviews" />}
-        <TopMenuItem title="Blog" pageRef="/blog" />
+        {isAdmin ? (<TopMenuItem title="Blog Monitor" pageRef="/admin/blog" />) : (<TopMenuItem title="Blog" pageRef="/blog" />)}
         {backToDashboard ? (
-          !isAdmin ? (<TopMenuItem title="My Bookings" pageRef="/dashboard" />):
-          (<TopMenuItem title={isFull ? 'View Companies' : 'Book Company'} pageRef="/book-company"
-          />)
+          !isAdmin ? (<TopMenuItem title="My Bookings" pageRef="/dashboard" />) :
+          (<TopMenuItem title={isFull ? 'View Companies' : 'Book Company'} pageRef="/book-company" />)
         ) : (
           <TopMenuItem
             title={isFull ? 'View Companies' : 'Book Company'}
             pageRef="/book-company"
           />
         )}
-        <button className="btn-nav" onClick={handleLogout} disabled={signingOut}>Sign out</button>
+        <button className="btn-nav" onClick={handleLogout}>Sign out</button>
       </div>
     </nav>
     </>

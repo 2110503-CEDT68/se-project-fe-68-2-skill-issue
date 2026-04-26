@@ -1,8 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { CompanyItem, BookingItem } from 'interface';
-import { formatDate } from '@/utils/dateFormat';
+import { CompanyItem, BookingItem } from '../../../interface';
+import { formatDate } from '../../utils/dateFormat';
 import { useState } from 'react';
 
 function CompanyLogo({ src, name }: { src?: string; name: string }) {

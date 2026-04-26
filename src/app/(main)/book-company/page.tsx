@@ -2,11 +2,11 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
-import CompanyCard from '@/components/CompanyCard';
-import SearchBar   from '@/components/SearchBar';
+import CompanyCard from '@/components/company/CompanyCard';
+import SearchBar   from '@/components/ui/SearchBar';
 import BookModal   from '@/components/modals/BookModal';
 import CancelModal from '@/components/modals/CancelModal';
-import EmptyState  from '@/components/EmptyState';
+import EmptyState  from '@/components/ui/EmptyState';
 import Toast       from '@/components/Toast';
 
 import { useBookCompany } from '@/hooks/useBookCompany';

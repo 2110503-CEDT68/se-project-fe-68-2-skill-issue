@@ -1,7 +1,7 @@
 'use client';
 
-import { DateReserveProps } from '../../interface';
-import { timeOptions } from '../utils/timeOptions';
+import { DateReserveProps } from '../../../interface';
+import { timeOptions } from '../../utils/timeOptions';
 import '@/styles/dateReserve.css';
 
 export default function DateReserve({ date, time, onDateChange, onTimeChange }: DateReserveProps) {

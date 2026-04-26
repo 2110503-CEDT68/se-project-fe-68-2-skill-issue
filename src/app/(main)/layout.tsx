@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useSelector } from 'react-redux';
 
-import TopMenu from '@/components/TopMenu';
+import TopMenu from '@/components/layout/TopMenu';
 import { RootState } from '@/redux/store';
 import { UserItem } from '../../../interface';
 

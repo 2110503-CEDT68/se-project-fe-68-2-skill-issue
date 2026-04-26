@@ -4,8 +4,8 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import userLogin from '@/libs/userLogin';
-import AuthLeftPanel from '@/components/AuthLeftPanel';
-import EyeIcon from '@/components/EyeIcon';
+import AuthLeftPanel from '@/components/auth/AuthLeftPanel';
+import EyeIcon from '@/components/ui/EyeIcon';
 import '@/styles/login.css';
 import getMe from '@/libs/getMe';
 
