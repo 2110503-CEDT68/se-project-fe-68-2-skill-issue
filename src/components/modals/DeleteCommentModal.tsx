@@ -10,7 +10,7 @@ interface DeleteCommentModalProps {
 export default function DeleteCommentModal({ loading, onConfirm, onClose }: DeleteCommentModalProps) {
   return (
     <ModalWrapper open onClose={onClose}>
-      <div className="modal-icon">💬🗑️</div>
+      <div className="modal-icon">🗑️</div>
       <h3>Delete Comment?</h3>
       <p style={{ marginTop: '8px', color: '#666' }}>
         Are you sure you want to delete this comment? 
