@@ -149,7 +149,7 @@ export default function AdminBlogsPage() {
         <input
           className="blog-search"
           type="text"
-          placeholder="Search by title or content…"
+          placeholder="Search by author, title or content…"
           value={searchInput}
           onChange={handleSearchChange}
         />
