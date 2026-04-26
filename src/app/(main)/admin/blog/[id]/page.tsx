@@ -57,10 +57,6 @@ export default function AdminBlogDetailPage() {
       if (!postData) { setNotFound(true); return; }
 
       setPost(postData);
-      const raw = commentRes.data || [];
-      setComments([...raw].sort(
-        (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-      ));
     } catch {
       setNotFound(true);
     } finally {

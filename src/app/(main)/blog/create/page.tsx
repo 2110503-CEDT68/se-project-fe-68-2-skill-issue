@@ -81,7 +81,7 @@ export default function CreatePostPage() {
         {/* Inputs */}
         <input
           className="post-input"
-          placeholder="Titile"
+          placeholder="Title"
           value={title}
           onChange={e => setTitle(e.target.value)}
           maxLength={50}
@@ -103,7 +103,7 @@ export default function CreatePostPage() {
         {/* Actions */}
         <div className="create-post-actions">
           <button className="btn-post-cancel" onClick={() => router.push('/blog')}>
-            Cancle
+            Cancel
           </button>
           <button
             className="btn-post-publish"
