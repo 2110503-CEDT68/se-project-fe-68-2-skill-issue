@@ -94,7 +94,7 @@ export default function EditReviewModal({
 
       <div className="modal-actions">
         <button className="btn-modal-cancel" onClick={onClose} disabled={submitting}>Cancel</button>
-        <button className="btn-modal-confirm" onClick={handleSubmit} disabled={submitting}>
+        <button className="btn-modal-confirm" onClick={handleSubmit} disabled={submitting || !comment.trim()}>
           {submitting ? 'Saving...' : 'Save Changes'}
         </button>
       </div>
