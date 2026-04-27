@@ -76,8 +76,15 @@ export default function PostCard({
     setSending(true);
     try {
       await createComment(token, post._id, text);
-      const res = await getComments(post._id);
-      setComments(res.data || []);
+      const newComment = {
+        _id: `tmp-${Date.now()}`,
+        text,
+        author: { _id: currentUserId, name: currentUserName } as unknown as string,
+        blog: post._id,
+        edited: false,
+        createdAt: new Date().toISOString(),
+      } as BlogComment;
+      setComments(prev => [newComment, ...prev]);
       setComment('');
       onShowToast('✅ Comment posted!', 'success');
     } catch (err) {

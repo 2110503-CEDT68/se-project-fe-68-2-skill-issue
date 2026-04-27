@@ -272,7 +272,7 @@ export default function AdminReviewsPage() {
         <div className="modal" style={{ maxWidth: 440 }}>
           <h3>Select Company</h3>
           <div style={{ marginTop: 12 }}>
-            <SearchBar value={pickerSearch} onChange={setPickerSearch} placeholder="Search companies..." />
+            <SearchBar value={pickerSearch} onChange={setPickerSearch} placeholder="Filter companies..." />
           </div>
           <div className="company-picker-list" style={{ maxHeight: '300px', overflowY: 'auto', marginTop: 12 }}>
             <button className={`company-picker-item ${!selectedCompany ? 'active' : ''}`} onClick={() => { setSelectedCompany(null); setPickerOpen(false); }}>
@@ -287,12 +287,14 @@ export default function AdminReviewsPage() {
         </div>
       </ModalWrapper>
 
-      <DeleteReviewAdminModal
-        open={deleteModalOpen}
-        onClose={() => setDeleteModalOpen(false)}
-        onConfirm={handleDelete}
-        loading={deleting}
-      />
+      {deleteModalOpen && (
+        <DeleteReviewAdminModal
+          open={deleteModalOpen}
+          onClose={() => setDeleteModalOpen(false)}
+          onConfirm={handleDelete}
+          loading={deleting}
+        />
+      )}
 
       <Toast toast={toast} />
     </div>

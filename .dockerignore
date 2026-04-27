@@ -1,0 +1,11 @@
+node_modules
+npm-debug.log
+.next
+coverage
+__tests__
+tests
+playwright-report
+test-results
+*.test.ts
+*.test.tsx
+.env*.local

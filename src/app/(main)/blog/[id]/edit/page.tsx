@@ -241,7 +241,7 @@ const cancelLeave = () => {
       <UnsavedChangeModal 
         isOpen={showLeaveModal}
         title="Unsaved Changes"
-        description="You have unsaved changes. Are you sure you want to leave? Your changes will be lost."
+        description="You have pending edits. Are you sure you want to leave? Your work will be lost."
         confirmText="Leave"
         cancelText="Stay"
         onConfirm={confirmLeave}
