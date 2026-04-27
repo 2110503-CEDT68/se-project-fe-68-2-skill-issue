@@ -1,8 +1,8 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { CardProps } from 'interface';
-import { formatDate } from '@/utils/dateFormat';
+import { CardProps } from '../../../interface';
+import { formatDate } from '../../utils/dateFormat';
 import '@/styles/card.css';
 
 function StarMini({ rating }: { rating: number }) {

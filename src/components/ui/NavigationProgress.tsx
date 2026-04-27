@@ -6,15 +6,24 @@ import { usePathname } from 'next/navigation';
 export default function NavigationProgress() {
   const pathname = usePathname();
   const [visible, setVisible] = useState(false);
-  const [prevPath, setPrevPath] = useState(pathname);
 
+  // Show spinner immediately on any internal link click
   useEffect(() => {
-    if (pathname === prevPath) return;
-    setPrevPath(pathname);
+    const handleClick = (e: MouseEvent) => {
+      const anchor = (e.target as HTMLElement).closest('a');
+      if (!anchor) return;
+      const href = anchor.getAttribute('href');
+      if (!href || href.startsWith('#') || href.startsWith('http') || href.startsWith('mailto')) return;
+      if (anchor.target === '_blank') return;
+      setVisible(true);
+    };
+    document.addEventListener('click', handleClick);
+    return () => document.removeEventListener('click', handleClick);
+  }, []);
 
-    setVisible(true);
-    const timer = setTimeout(() => setVisible(false), 600);
-    return () => clearTimeout(timer);
+  // Hide spinner once navigation completes (pathname changed)
+  useEffect(() => {
+    setVisible(false);
   }, [pathname]);
 
   if (!visible) return null;
@@ -47,4 +56,3 @@ export default function NavigationProgress() {
     </div>
   );
 }
-

@@ -57,6 +57,8 @@ export default function AdminBlogDetailPage() {
       if (!postData) { setNotFound(true); return; }
 
       setPost(postData);
+      const res=commentRes.data || []
+      setComments([...res]);
     } catch {
       setNotFound(true);
     } finally {

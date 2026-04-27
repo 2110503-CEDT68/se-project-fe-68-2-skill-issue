@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { CompanyItem } from 'interface';
+import { CompanyItem } from '../../../interface';
 import StarDisplay from '@/components/review/StarDisplay';
 
 // ── CompanyLogo ──────────────────────────────────────────────────────────────

@@ -1,6 +1,6 @@
 export default async function deletePost(token: string, postId: string): Promise<void> {
   const response = await fetch(
-    `${process.env.NEXT_PUBLIC_API_BASE}/posts/${postId}`,
+    `${process.env.NEXT_PUBLIC_API_BASE}/blogs/${postId}`,
     {
       method: 'DELETE',
       headers: {

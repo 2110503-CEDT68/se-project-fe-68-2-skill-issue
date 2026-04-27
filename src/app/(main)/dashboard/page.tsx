@@ -4,8 +4,8 @@ import { useState } from 'react';
 import { useSelector } from 'react-redux';
 import Link from 'next/link';
 
-import Banner        from '@/components/Banner';
-import BookingList   from '@/components/BookingList';
+import Banner        from '@/components/layout/Banner';
+import BookingList   from '@/components/booking/BookingList';
 import MyReviewList  from '@/components/review/MyReviewList';
 
 import { RootState } from '@/redux/store';

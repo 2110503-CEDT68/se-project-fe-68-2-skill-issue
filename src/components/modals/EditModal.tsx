@@ -1,7 +1,7 @@
 'use client';
 
 import { BookingItem } from '../../../interface';
-import DateReserve from '../DateReserve';
+import DateReserve from '@/components/booking/DateReserve';
 import ModalWrapper from '../ModalWrapper';
 
 interface EditModalProps {

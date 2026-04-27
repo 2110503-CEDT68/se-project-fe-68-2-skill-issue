@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
-import Banner from '@/components/Banner';
+import Banner from '@/components/layout/Banner';
 
 describe('Banner', () => {
   it('renders the banner heading', () => {
