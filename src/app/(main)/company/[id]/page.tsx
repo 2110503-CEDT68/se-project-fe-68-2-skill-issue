@@ -5,7 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 
 // ── Components ───────────────────────────────────────────────────────────────
 import CompanyHeader          from '@/components/company/CompanyHeader';
-import CompanyProfileSkeleton from '@/components/company/Companyprofileskeleton';
+import CompanyProfileSkeleton from '@/components/company/CompanyProfileSkeleton';
 import ReviewsFeed            from '@/components/review/ReviewsFeed';
 import CreateReviewModal      from '@/components/modals/review/CreateReviewModal';
 import EditReviewModal        from '@/components/modals/review/EditReviewModal';
