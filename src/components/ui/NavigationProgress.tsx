@@ -15,6 +15,15 @@ export default function NavigationProgress() {
       const href = anchor.getAttribute('href');
       if (!href || href.startsWith('#') || href.startsWith('http') || href.startsWith('mailto')) return;
       if (anchor.target === '_blank') return;
+      try {
+        const url = new URL(href, window.location.origin);
+        const current = window.location;
+        if (url.pathname === current.pathname && url.search === current.search) {
+          return;
+        }
+      } catch {
+        // Ignore invalid URLs and continue showing progress for normal navigation.
+      }
       setVisible(true);
     };
     document.addEventListener('click', handleClick);
